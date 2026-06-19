@@ -1,0 +1,13 @@
+# Binaries
+/bin/
+*.exe
+*.out
+
+# Model assets (provided by host apps, not committed)
+*.gguf
+*.onnx
+/models/
+
+# Go
+*.test
+*.prof
