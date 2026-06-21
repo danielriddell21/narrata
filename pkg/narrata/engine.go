@@ -15,14 +15,14 @@ import (
 
 // Engine is the embedded narration runtime. It is safe for concurrent use.
 type Engine struct {
-	cfg       Config
-	personas  *registry
-	text      text.Backend
-	tts       tts.Backend
-	ttsErr    error // why TTS is unavailable, if it failed to initialise
-	sem       chan struct{}
-	defVoice  string
-	sampleRt  int
+	cfg      Config
+	personas *registry
+	text     text.Backend
+	tts      tts.Backend
+	ttsErr   error // why TTS is unavailable, if it failed to initialise
+	sem      chan struct{}
+	defVoice string
+	sampleRt int
 }
 
 // New constructs an Engine from cfg. It always loads the bundled default

@@ -3,15 +3,15 @@ package narrata
 // Persona is a configurable behavioural and stylistic profile. Personas shape
 // narration only: they have no memory, tools, goals, plans, or autonomy.
 type Persona struct {
-	ID          string            `json:"id"`
-	Name        string            `json:"name"`
-	Description string            `json:"description"`
-	Style       Style             `json:"style"`
-	Voice       Voice             `json:"voice"`
-	Rules       []string          `json:"rules"`
+	ID          string             `json:"id"`
+	Name        string             `json:"name"`
+	Description string             `json:"description"`
+	Style       Style              `json:"style"`
+	Voice       Voice              `json:"voice"`
+	Rules       []string           `json:"rules"`
 	Constraints PersonaConstraints `json:"constraints"`
 	EventPolicy PersonaEventPolicy `json:"event_policy"`
-	Examples    []Example         `json:"examples,omitempty"`
+	Examples    []Example          `json:"examples,omitempty"`
 }
 
 // Style describes tone and delivery.
