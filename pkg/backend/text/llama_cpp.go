@@ -1,13 +1,14 @@
 //go:build llama
 
-// Package-level llama.cpp/GGUF backend. This file is compiled only with the
-// "llama" build tag and requires a local llama.cpp build (headers + libllama).
-// See pkg/backend/text/README.md for build instructions.
+// This file implements the llama.cpp/GGUF text backend. It is compiled only
+// with the "llama" build tag and requires a local llama.cpp build (headers +
+// libllama). See pkg/backend/text/README.md for build instructions.
 //
 // It is an experimental/feasibility implementation: the llama.cpp C API evolves
 // between releases, so the cgo declarations below target a recent (2025-era)
 // API. If your llama.cpp build differs, adjust the function names/signatures to
 // match its llama.h.
+
 package text
 
 /*

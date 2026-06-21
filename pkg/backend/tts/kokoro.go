@@ -1,14 +1,15 @@
 //go:build kokoro
 
-// Kokoro/ONNX text-to-speech backend. Compiled only with the "kokoro" build
-// tag; requires ONNX Runtime (headers + libonnxruntime). See
-// pkg/backend/tts/README.md for build instructions.
+// This file implements the Kokoro/ONNX text-to-speech backend. It is compiled
+// only with the "kokoro" build tag and requires ONNX Runtime (headers +
+// libonnxruntime). See pkg/backend/tts/README.md for build instructions.
 //
 // This is an experimental/feasibility implementation. Kokoro model exports vary
 // (input/output tensor names, the style-vector layout, and the grapheme/phoneme
 // vocabulary differ between releases), so the constants below may need adjusting
 // to match a specific kokoro.onnx file. The C shim in the cgo preamble wraps the
 // ONNX Runtime C API so the Go side stays small.
+
 package tts
 
 /*
