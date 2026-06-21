@@ -220,10 +220,14 @@ Narrata should feel like an embedded renderer for narration, not a chatbot wrapp
 
 ```go
 engine, err := narrata.New(narrata.Config{
-    ModelPath:    "./models/text.gguf",
     PersonasPath: "./personas.json",
+    Text: narrata.TextConfig{
+        Backend:   "llama.cpp",
+        ModelPath: "./models/text.gguf",
+    },
     TTS: narrata.TTSConfig{
         Enabled:   true,
+        Backend:   "kokoro",
         ModelPath: "./models/kokoro.onnx",
     },
 })

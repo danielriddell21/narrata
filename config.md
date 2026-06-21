@@ -103,17 +103,9 @@ This must remain rendering policy, not autonomous task behaviour.
 
 Clear, calm, useful default.
 
-### assistant
-
-Helpful explanation voice. This persona must still only narrate host-provided data; it must not become a chatbot.
-
 ### home_announcer
 
 Plain home automation announcements.
-
-### system_announcer
-
-Operational alerts for services and devices.
 
 ### executive_briefing
 

@@ -21,7 +21,7 @@ import (
     "context"
     "fmt"
 
-    "github.com/your-org/narrata/pkg/narrata"
+    "github.com/danielriddell21/narrata/pkg/narrata"
 )
 
 func main() {

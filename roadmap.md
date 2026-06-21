@@ -2,6 +2,10 @@
 
 ## Phase 0: Prototype Shape
 
+**Status: implemented.** Engine API, persona loader, prompt builder, mock
+backend, default personas, the monitoring example, and scope-guardrail tests
+are all in place.
+
 Goal: prove the embedded API shape without committing to model backend complexity.
 
 Deliverables:
@@ -25,6 +29,11 @@ Exit criteria:
 
 ## Phase 1: Local Text Generation
 
+**Status: implemented.** A pure-Go `template` backend generates real text
+locally with no external process; timeout, cancellation, and bounded
+concurrency are handled by the engine; the game example is included. An
+experimental llama.cpp/GGUF backend is available behind the `llama` build tag.
+
 Goal: generate real text locally.
 
 Deliverables:
@@ -45,6 +54,12 @@ Exit criteria:
 - Backend is replaceable behind an interface.
 
 ## Phase 2: Speech Output
+
+**Status: implemented.** The TTS interface, a deterministic mock backend
+(valid WAV), optional audio output, and the home automation example are in
+place; text-only usage is unaffected when TTS is disabled or its model is
+missing. An experimental Kokoro/ONNX backend is available behind the `kokoro`
+build tag.
 
 Goal: optional text-to-speech output.
 
