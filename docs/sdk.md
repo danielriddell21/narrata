@@ -272,3 +272,37 @@ type LLM interface {
 ```
 
 This keeps llama.cpp, MLX, template output, or optional cloud adapters replaceable without changing the host integration.
+
+## 10. Error Handling
+
+`Generate` and `New` return typed, wrapped errors. Compare them with
+`errors.Is`:
+
+```go
+res, err := engine.Generate(ctx, req)
+switch {
+case errors.Is(err, narrata.ErrPersonaNotFound):
+    // Unknown persona ID.
+case errors.Is(err, narrata.ErrInvalidRequest):
+    // Request had nothing to narrate.
+case errors.Is(err, narrata.ErrModelNotLoaded):
+    // A backend failed to initialise.
+case errors.Is(err, narrata.ErrGenerationTimeout):
+    // Generation exceeded the deadline.
+case errors.Is(err, narrata.ErrTTSUnavailable):
+    // Speech was requested but TTS is disabled or failed to initialise.
+case err != nil:
+    // Other error (e.g. context cancellation).
+default:
+    use(res.Text)
+}
+```
+
+| Error | Meaning |
+|-------|---------|
+| `ErrPersonaNotFound` | The requested (or default) persona ID is not registered. |
+| `ErrInvalidRequest` | The request failed validation. |
+| `ErrModelNotLoaded` | A backend failed to initialise or is missing. |
+| `ErrGenerationTimeout` | Generation exceeded the deadline. |
+| `ErrTTSUnavailable` | Speech requested but TTS is disabled or failed to initialise. |
+| `ErrScopeViolation` | An operation outside Narrata's narration scope was attempted. |

@@ -2,7 +2,7 @@ package narrata
 
 import "errors"
 
-// Typed errors returned by the Engine. Callers may compare with errors.Is.
+// Typed errors returned by the [Engine]. Callers may compare with [errors.Is].
 var (
 	// ErrPersonaNotFound means the requested persona ID is not registered.
 	ErrPersonaNotFound = errors.New("narrata: persona not found")

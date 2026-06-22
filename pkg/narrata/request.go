@@ -77,20 +77,29 @@ type Request struct {
 }
 
 // Constraints bound and shape generated text. Zero-valued fields fall back to
-// the persona's constraints.
+// the persona's [PersonaConstraints].
 type Constraints struct {
-	MaxWords       int
-	MaxSentences   int
-	AllowHumour    bool
+	// MaxWords caps the output word count. Zero defers to the persona.
+	MaxWords int
+	// MaxSentences caps the output sentence count. Zero defers to the persona.
+	MaxSentences int
+	// AllowHumour permits humorous phrasing for this request.
+	AllowHumour bool
+	// AllowProfanity permits profanity for this request.
 	AllowProfanity bool
-	Format         Format
+	// Format selects the output surface (plain prose or markdown).
+	Format Format
 }
 
 // EventPolicy expresses how an event should be rendered. It is rendering
 // policy, not autonomous behaviour: Narrata never schedules or acts on it.
 type EventPolicy struct {
-	Importance   string
-	Urgency      string
-	Cooldown     time.Duration
+	// Importance is the host-assigned importance of the event.
+	Importance string
+	// Urgency is the host-assigned urgency of the event.
+	Urgency string
+	// Cooldown is the minimum gap the host suggests between renderings.
+	Cooldown time.Duration
+	// AllowSilence permits Narrata to render nothing for this event.
 	AllowSilence bool
 }

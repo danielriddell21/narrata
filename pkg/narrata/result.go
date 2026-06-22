@@ -2,7 +2,7 @@ package narrata
 
 import "time"
 
-// Result is the output of Engine.Generate.
+// Result is the output of [Engine.Generate].
 type Result struct {
 	// Text is the generated narration. Empty when the mode is speech-only or
 	// when the request was rendered silent.

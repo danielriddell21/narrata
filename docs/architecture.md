@@ -8,55 +8,60 @@ Narrata must not become an assistant framework. The architecture should actively
 
 ## 2. System Boundary
 
-```text
-Host Application
-  ├── Game loop / automation event / dashboard alert
-  ├── Host data and business rules
-  ├── Host decision: should Narrata be called?
-  └── Narrata embedded runtime
-        ├── Persona registry
-        ├── Prompt builder
-        ├── Text model backend
-        ├── Output policy
-        └── Optional TTS backend
+```mermaid
+flowchart TD
+    subgraph Host["Host Application"]
+        direction TB
+        A[Game loop / automation event / dashboard alert]
+        B[Host data and business rules]
+        C[Host decision: should Narrata be called?]
+    end
+
+    subgraph Narrata["Narrata embedded runtime"]
+        direction TB
+        R[Persona registry]
+        P[Prompt builder]
+        T[Text model backend]
+        O[Output policy]
+        S[Optional TTS backend]
+    end
+
+    C -->|calls when narration is wanted| Narrata
 ```
 
 Narrata does not poll the host system. The host calls Narrata when it wants narration.
 
 ## 3. Runtime Flow
 
-```text
-Request
-  ↓
-Validate input
-  ↓
-Load persona
-  ↓
-Build compact context
-  ↓
-Generate text
-  ↓
-Apply output policy
-  ↓
-Optional TTS
-  ↓
-Return result to host
+```mermaid
+flowchart TD
+    Request --> Validate[Validate input]
+    Validate --> Persona[Load persona]
+    Persona --> Context[Build compact context]
+    Context --> Generate[Generate text]
+    Generate --> Policy[Apply output policy]
+    Policy --> TTS[Optional TTS]
+    TTS --> Result[Return result to host]
 ```
 
 ## 4. Explicitly Excluded Flows
 
-These flows should not exist in the core runtime:
+These flows must not exist in the core runtime:
 
-```text
-User chat → conversation memory → planning → tool calls → action
-```
-
-```text
-Background poller → autonomous decision → external call → generated task
-```
-
-```text
-Document ingestion → vector database → retrieval agent → answer
+```mermaid
+flowchart LR
+    subgraph X1[" "]
+        direction LR
+        a1[User chat] --> a2[conversation memory] --> a3[planning] --> a4[tool calls] --> a5[action]
+    end
+    subgraph X2[" "]
+        direction LR
+        b1[Background poller] --> b2[autonomous decision] --> b3[external call] --> b4[generated task]
+    end
+    subgraph X3[" "]
+        direction LR
+        c1[Document ingestion] --> c2[vector database] --> c3[retrieval agent] --> c4[answer]
+    end
 ```
 
 If a host system wants any of that, it should implement it outside Narrata and call Narrata only for final narration.

@@ -10,32 +10,46 @@ import (
 
 // Backend is the speech-synthesis contract.
 type Backend interface {
+	// Speak synthesises audio for text, honouring opts and ctx cancellation.
 	Speak(ctx context.Context, text string, opts SpeakOptions) (Result, error)
+	// Close releases any resources held by the backend.
 	Close() error
 }
 
 // SpeakOptions are per-call voice parameters. Zero values mean "use the
 // backend/persona default".
 type SpeakOptions struct {
-	VoiceID    string
-	Speed      float32
-	Pitch      float32
+	// VoiceID names the voice to synthesise with.
+	VoiceID string
+	// Speed is the speaking-rate multiplier (1.0 is normal).
+	Speed float32
+	// Pitch is the pitch multiplier (1.0 is normal).
+	Pitch float32
+	// SampleRate overrides the output sample rate in Hz.
 	SampleRate int
 }
 
 // Result is synthesised audio.
 type Result struct {
-	Audio      []byte
-	Format     string
+	// Audio holds the encoded audio bytes.
+	Audio []byte
+	// Format names the audio encoding, e.g. "wav".
+	Format string
+	// SampleRate is the output sample rate in Hz.
 	SampleRate int
 }
 
-// Options configures backend construction.
+// Options configures backend construction. It is populated by the engine from
+// the host's TTS configuration.
 type Options struct {
-	Backend      string
-	ModelPath    string
+	// Backend names the implementation: "mock" or "kokoro".
+	Backend string
+	// ModelPath is the path to the TTS model file.
+	ModelPath string
+	// DefaultVoice is used when a persona declares no voice.
 	DefaultVoice string
-	SampleRate   int
+	// SampleRate is the output sample rate in Hz. Zero uses the backend default.
+	SampleRate int
 }
 
 // New constructs a TTS backend by name. An empty name defaults to the

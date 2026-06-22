@@ -2,7 +2,7 @@ package narrata
 
 import "time"
 
-// Config configures an Engine. The zero value is usable: with no text backend
+// Config configures an [Engine]. The zero value is usable: with no text backend
 // specified, the Engine defaults to the deterministic "mock" backend so that
 // host apps can wire up and test without a model file.
 type Config struct {
