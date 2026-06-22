@@ -79,6 +79,11 @@ Exit criteria:
 
 ## Phase 3: Developer Experience
 
+**Status: implemented.** README quickstart and config examples, a persona
+authoring guide, the `narrata` development CLI (`validate`, `gen`, `generate`,
+`personas`), benchmarks for the prompt/policy/generate paths, example
+integrations, and the "What Narrata Is Not" documentation are all in place.
+
 Goal: make it usable by other developers.
 
 Deliverables:

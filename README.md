@@ -57,7 +57,8 @@ Swap in real local inference by setting `Text.Backend` to `"template"` (pure Go)
 or `"llama.cpp"` (GGUF, built with `-tags llama`). See [docs/backends.md](docs/backends.md).
 
 Runnable programs live in [`examples/`](examples): `monitoring`, `game`, and
-`home_automation`.
+`home_automation`. A development CLI (`go run ./cmd/narrata`) validates personas,
+scaffolds new ones, and renders events from the terminal — see [docs/cli.md](docs/cli.md).
 
 ## Architecture
 
@@ -101,7 +102,9 @@ Full docs are in [`docs/`](docs/README.md):
 - [architecture.md](docs/architecture.md) — boundaries, flow, components
 - [sdk.md](docs/sdk.md) — Go API reference and error handling
 - [personas.md](docs/personas.md) — persona schema and defaults
+- [persona-authoring.md](docs/persona-authoring.md) — writing and scaffolding personas
 - [backends.md](docs/backends.md) — backend selection and cgo backends
+- [cli.md](docs/cli.md) — the `narrata` development CLI
 - [roadmap.md](docs/roadmap.md) — phased delivery plan
 - [research.md](docs/research.md) — backend choices and rationale
 
