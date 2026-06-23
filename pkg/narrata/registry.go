@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"sync"
 
 	"github.com/danielriddell21/narrata/internal/validate"
@@ -90,6 +91,9 @@ func (r *registry) loadBytes(data []byte) error {
 	if err := json.Unmarshal(data, &pf); err != nil {
 		return fmt.Errorf("%w: parsing personas: %v", ErrInvalidRequest, err)
 	}
+	if err := checkSchemaVersion(pf.Version); err != nil {
+		return err
+	}
 	for _, p := range pf.Personas {
 		if err := r.Save(p); err != nil {
 			return err
@@ -155,6 +159,26 @@ func (r *registry) loadPersonaFileOrDoc(data []byte, path string) error {
 		return fmt.Errorf("%w: parsing persona %q: %v", ErrInvalidRequest, path, err)
 	}
 	return r.Save(p)
+}
+
+// checkSchemaVersion rejects persona documents whose major version differs from
+// the supported [SchemaVersion]. An empty version is treated as compatible.
+func checkSchemaVersion(version string) error {
+	if version == "" {
+		return nil
+	}
+	if majorVersion(version) != majorVersion(SchemaVersion) {
+		return fmt.Errorf("%w: unsupported persona schema version %q (this build supports %s.x)",
+			ErrInvalidRequest, version, majorVersion(SchemaVersion))
+	}
+	return nil
+}
+
+func majorVersion(v string) string {
+	if i := strings.IndexByte(v, '.'); i >= 0 {
+		return v[:i]
+	}
+	return v
 }
 
 // validatePersona maps a Persona onto the pure validator.

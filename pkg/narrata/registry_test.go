@@ -75,6 +75,32 @@ func TestLoadDirOnePersonaPerFile(t *testing.T) {
 	}
 }
 
+func TestSchemaVersionRejectsIncompatibleMajor(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "p.json")
+	doc := `{"version":"9.0","personas":[{"id":"x","name":"X","description":"d","rules":["r"],
+		"constraints":{"max_words":10,"max_sentences":1}}]}`
+	if err := os.WriteFile(path, []byte(doc), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := New(Config{PersonasPath: path}); err == nil {
+		t.Fatal("expected schema version error")
+	}
+}
+
+func TestSchemaVersionAcceptsSameMajor(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "p.json")
+	doc := `{"version":"0.5","personas":[{"id":"x2","name":"X","description":"d","rules":["r"],
+		"constraints":{"max_words":10,"max_sentences":1}}]}`
+	if err := os.WriteFile(path, []byte(doc), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := New(Config{PersonasPath: path}); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
 func TestInvalidPersonaRejected(t *testing.T) {
 	r := newRegistry()
 	err := r.Save(Persona{ID: "x"}) // missing name/description/rules

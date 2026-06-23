@@ -1,5 +1,10 @@
 package narrata
 
+// SchemaVersion is the persona schema version this build understands. A
+// personas file may declare a "version"; a file whose major version differs is
+// rejected on load so schema changes can evolve safely.
+const SchemaVersion = "0.1"
+
 // Persona is a configurable behavioural and stylistic profile. Personas shape
 // narration only: they have no memory, tools, goals, plans, or autonomy.
 type Persona struct {
