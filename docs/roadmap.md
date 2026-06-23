@@ -105,6 +105,12 @@ Exit criteria:
 
 ## Phase 4: Hardening
 
+**Status: implemented on branch `feat/phase-4-hardening` (under review).**
+Delivered: prompt-injection sanitization of untrusted event data, host-controlled
+`slog` logging hooks (metadata only), versioned persona schema validation, a
+regex-precompilation memory fix, and concurrency coverage under the race
+detector. Event-policy behaviour is deferred to Phase 5.
+
 Goal: make Narrata stable enough for real host systems.
 
 Deliverables:

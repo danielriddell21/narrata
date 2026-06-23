@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"strings"
 	"sync"
@@ -213,6 +214,30 @@ func TestLoggerReceivesMetadataNotData(t *testing.T) {
 	if strings.Contains(out, "hunter2-SECRET") || strings.Contains(out, "password") {
 		t.Fatalf("log leaked event data: %s", out)
 	}
+}
+
+func TestConcurrentSaveAndGenerate(t *testing.T) {
+	e := newTestEngine(t, Config{MaxConcurrent: 4})
+	var wg sync.WaitGroup
+	for i := 0; i < 50; i++ {
+		wg.Add(2)
+		go func(n int) {
+			defer wg.Done()
+			_ = e.Personas().Save(Persona{
+				ID: fmt.Sprintf("p%d", n), Name: "P", Description: "d",
+				Rules:       []string{"r"},
+				Constraints: PersonaConstraints{MaxWords: 10, MaxSentences: 1},
+			})
+		}(i)
+		go func() {
+			defer wg.Done()
+			_, _ = e.Generate(context.Background(), Request{
+				PersonaID: "narrator", Event: "tick", Data: map[string]any{"n": 1},
+			})
+			_ = e.Personas().List()
+		}()
+	}
+	wg.Wait()
 }
 
 func TestDefaultTimeoutApplied(t *testing.T) {
