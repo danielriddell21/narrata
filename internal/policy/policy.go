@@ -32,9 +32,22 @@ var (
 	sentenceRe = regexp.MustCompile(`[^.!?]+[.!?]+|\S[^.!?]*$`)
 )
 
-// profanity is a deliberately small mask list; the goal is a basic gate, not a
-// comprehensive filter. Hosts that need more should pre/post-filter themselves.
-var profanity = []string{"fuck", "shit", "bastard", "asshole", "bitch"}
+// profanityWords is a deliberately small mask list; the goal is a basic gate,
+// not a comprehensive filter. Hosts that need more should pre/post-filter
+// themselves.
+var profanityWords = []string{"fuck", "shit", "bastard", "asshole", "bitch"}
+
+// profanityRes holds the word-boundary matchers, compiled once at startup so
+// the hot path does not recompile a regex per call.
+var profanityRes = compileProfanity(profanityWords)
+
+func compileProfanity(words []string) []*regexp.Regexp {
+	res := make([]*regexp.Regexp, len(words))
+	for i, w := range words {
+		res[i] = regexp.MustCompile(`(?i)\b` + regexp.QuoteMeta(w) + `\b`)
+	}
+	return res
+}
 
 // Apply runs the post-processing pipeline and returns the cleaned text.
 func Apply(text string, o Options) Result {
@@ -106,8 +119,7 @@ func collapseWhitespace(t string) string {
 }
 
 func maskProfanity(t string) string {
-	for _, w := range profanity {
-		re := regexp.MustCompile(`(?i)\b` + regexp.QuoteMeta(w) + `\b`)
+	for _, re := range profanityRes {
 		t = re.ReplaceAllStringFunc(t, func(m string) string {
 			if len(m) <= 1 {
 				return m
