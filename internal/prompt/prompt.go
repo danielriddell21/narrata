@@ -87,7 +87,7 @@ func Build(in Input) string {
 	b.WriteString(". Do not output JSON, quotes, labels, or commentary. Output only the narration.\n")
 
 	b.WriteString(eventPrefix)
-	b.WriteString(in.Event)
+	b.WriteString(sanitize(in.Event))
 	b.WriteString("\n")
 
 	b.WriteString(dataHeader)
@@ -100,7 +100,7 @@ func Build(in Input) string {
 
 	if in.Instruction != "" {
 		b.WriteString("Instruction: ")
-		b.WriteString(in.Instruction)
+		b.WriteString(sanitize(in.Instruction))
 		b.WriteString("\n")
 	}
 
@@ -181,7 +181,7 @@ func flatten(prefix string, v any, out *[]string) {
 		if key == "" {
 			key = "value"
 		}
-		*out = append(*out, key+": "+scalar(t))
+		*out = append(*out, sanitize(key)+": "+scalar(t))
 	}
 }
 
@@ -190,7 +190,7 @@ func scalar(v any) string {
 	case nil:
 		return "null"
 	case string:
-		return t
+		return sanitize(t)
 	case float64:
 		// JSON numbers decode to float64; render integers cleanly.
 		if t == float64(int64(t)) {
@@ -202,6 +202,33 @@ func scalar(v any) string {
 	default:
 		return fmt.Sprintf("%v", t)
 	}
+}
+
+// sanitize neutralizes untrusted text before it enters a prompt. Event data,
+// keys, the event name, and any instruction may originate from untrusted
+// sources, so newlines and tabs are collapsed to spaces and other control
+// characters are dropped. This prevents injected content from forging new
+// prompt lines (for example a fake "Narration:" directive) or breaking the
+// offline backends' Event/Data parsing.
+func sanitize(s string) string {
+	var b strings.Builder
+	b.Grow(len(s))
+	prevSpace := false
+	for _, r := range s {
+		switch {
+		case r == '\n', r == '\r', r == '\t', r == ' ':
+			if !prevSpace {
+				b.WriteByte(' ')
+			}
+			prevSpace = true
+		case r < 0x20 || r == 0x7f:
+			// Drop other control characters entirely.
+		default:
+			b.WriteRune(r)
+			prevSpace = false
+		}
+	}
+	return strings.TrimSpace(b.String())
 }
 
 // ParseEventData extracts the event name and data lines from a prompt built by
