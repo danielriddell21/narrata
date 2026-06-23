@@ -33,6 +33,9 @@ type Input struct {
 	Event       string
 	DataLines   []string // pre-compacted "key: value" lines, in stable order
 	Instruction string
+	// Directive is an optional, trusted stylistic instruction derived from event
+	// policy (for example "Be terse and direct."). It is emitted verbatim.
+	Directive string
 }
 
 // Markers used in the prompt body. Offline backends rely on these.
@@ -85,6 +88,11 @@ func Build(in Input) string {
 	b.WriteString("Narrate the event below as a short line of ")
 	b.WriteString(surface)
 	b.WriteString(". Do not output JSON, quotes, labels, or commentary. Output only the narration.\n")
+
+	if in.Directive != "" {
+		b.WriteString(in.Directive)
+		b.WriteString("\n")
+	}
 
 	b.WriteString(eventPrefix)
 	b.WriteString(in.Event)

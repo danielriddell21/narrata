@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
+	"github.com/danielriddell21/narrata/internal/eventpolicy"
 	"github.com/danielriddell21/narrata/internal/policy"
 	"github.com/danielriddell21/narrata/internal/prompt"
 	"github.com/danielriddell21/narrata/internal/validate"
@@ -23,6 +25,11 @@ type Engine struct {
 	sem      chan struct{}
 	defVoice string
 	sampleRt int
+
+	// lastRender tracks the most recent rendered output per persona+event, for
+	// event-policy cooldown decisions. It holds only timestamps, no payload.
+	epMu       sync.Mutex
+	lastRender map[string]time.Time
 }
 
 // New constructs an Engine from cfg. It always loads the bundled default
@@ -63,11 +70,12 @@ func New(cfg Config) (*Engine, error) {
 	}
 
 	e := &Engine{
-		cfg:      cfg,
-		personas: reg,
-		text:     tb,
-		defVoice: cfg.TTS.DefaultVoice,
-		sampleRt: cfg.TTS.SampleRate,
+		cfg:        cfg,
+		personas:   reg,
+		text:       tb,
+		defVoice:   cfg.TTS.DefaultVoice,
+		sampleRt:   cfg.TTS.SampleRate,
+		lastRender: make(map[string]time.Time),
 	}
 	if cfg.MaxConcurrent > 0 {
 		e.sem = make(chan struct{}, cfg.MaxConcurrent)
@@ -139,6 +147,35 @@ func (e *Engine) Generate(ctx context.Context, req Request) (Result, error) {
 		return Result{}, ErrTTSUnavailable
 	}
 
+	start := time.Now()
+	eff := effectiveConstraints(persona, req)
+
+	// Decide how to render the event within host-defined boundaries. This is
+	// rendering policy only: it may stay silent, tighten length, or add a
+	// stylistic directive, but it never schedules work or acts autonomously.
+	key := personaID + "\x00" + req.Event
+	e.epMu.Lock()
+	last, hasLast := e.lastRender[key]
+	e.epMu.Unlock()
+	var sinceLast time.Duration
+	if hasLast {
+		sinceLast = start.Sub(last)
+	}
+	dec := eventpolicy.Decide(eventpolicy.Inputs{
+		Importance:   firstNonEmpty(req.EventPolicy.Importance, persona.EventPolicy.DefaultImportance, "normal"),
+		Urgency:      firstNonEmpty(req.EventPolicy.Urgency, "normal"),
+		Intensity:    firstNonEmpty(persona.EventPolicy.Intensity, "medium"),
+		AllowSilence: eff.allowSilence,
+		Cooldown:     resolveCooldown(persona, req),
+		SinceLast:    sinceLast,
+		HasLast:      hasLast,
+		MaxWords:     eff.maxWords,
+		MaxSentences: eff.maxSentences,
+	})
+	if dec.Silent {
+		return Result{PersonaID: persona.ID, Silent: true, Duration: time.Since(start)}, nil
+	}
+
 	// Apply the engine's default timeout if the caller set no earlier deadline.
 	if e.cfg.Timeout > 0 {
 		if _, hasDeadline := ctx.Deadline(); !hasDeadline {
@@ -153,9 +190,6 @@ func (e *Engine) Generate(ctx context.Context, req Request) (Result, error) {
 	}
 	defer e.release()
 
-	start := time.Now()
-	eff := effectiveConstraints(persona, req)
-
 	p := prompt.Build(prompt.Input{
 		PersonaName:   persona.Name,
 		Description:   persona.Description,
@@ -164,12 +198,13 @@ func (e *Engine) Generate(ctx context.Context, req Request) (Result, error) {
 		Humour:        persona.Style.Humour,
 		Verbosity:     persona.Style.Verbosity,
 		Rules:         persona.Rules,
-		MaxWords:      eff.maxWords,
-		MaxSentences:  eff.maxSentences,
+		MaxWords:      dec.MaxWords,
+		MaxSentences:  dec.MaxSentences,
 		AllowMarkdown: eff.allowMarkdown,
 		Event:         req.Event,
 		DataLines:     prompt.CompactData(req.Data),
 		Instruction:   req.Instruction,
+		Directive:     dec.Directive,
 	})
 
 	gen, err := e.text.Generate(ctx, p, text.GenerateOptions{
@@ -183,8 +218,8 @@ func (e *Engine) Generate(ctx context.Context, req Request) (Result, error) {
 	}
 
 	processed := policy.Apply(gen.Text, policy.Options{
-		MaxWords:       eff.maxWords,
-		MaxSentences:   eff.maxSentences,
+		MaxWords:       dec.MaxWords,
+		MaxSentences:   dec.MaxSentences,
 		AllowMarkdown:  eff.allowMarkdown,
 		AllowProfanity: eff.allowProfanity,
 		AllowSilence:   eff.allowSilence,
@@ -214,8 +249,35 @@ func (e *Engine) Generate(ctx context.Context, req Request) (Result, error) {
 		res.Spoken = len(audio.Audio) > 0
 	}
 
+	// Record this render so cooldown can gate subsequent events.
+	e.epMu.Lock()
+	e.lastRender[key] = time.Now()
+	e.epMu.Unlock()
+
 	res.Duration = time.Since(start)
 	return res, nil
+}
+
+// resolveCooldown returns the effective cooldown: the request value takes
+// precedence over the persona's CooldownSeconds.
+func resolveCooldown(p Persona, req Request) time.Duration {
+	if req.EventPolicy.Cooldown > 0 {
+		return req.EventPolicy.Cooldown
+	}
+	if p.EventPolicy.CooldownSeconds > 0 {
+		return time.Duration(p.EventPolicy.CooldownSeconds) * time.Second
+	}
+	return 0
+}
+
+// firstNonEmpty returns the first non-empty argument.
+func firstNonEmpty(vals ...string) string {
+	for _, v := range vals {
+		if v != "" {
+			return v
+		}
+	}
+	return ""
 }
 
 func (e *Engine) voiceFor(p Persona) string {
