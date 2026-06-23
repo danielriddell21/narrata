@@ -126,6 +126,12 @@ Exit criteria:
 
 ## Phase 5: Post-MVP Event Awareness
 
+**Status: implemented on branch `feat/phase-5-event-awareness` (under review).**
+`EventPolicy` is now acted on: cooldown can yield a silent result, importance
+scales output length, urgency forces terse output, and persona intensity adds a
+stylistic directive — all rendering policy, with no scheduling or autonomous
+behaviour. See [event-policy.md](./event-policy.md).
+
 Goal: allow Narrata to decide how to render an event within host-defined boundaries.
 
 Deliverables:
