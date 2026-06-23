@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/danielriddell21/narrata/internal/policy"
@@ -23,6 +24,7 @@ type Engine struct {
 	sem      chan struct{}
 	defVoice string
 	sampleRt int
+	log      *slog.Logger
 }
 
 // New constructs an Engine from cfg. It always loads the bundled default
@@ -62,12 +64,18 @@ func New(cfg Config) (*Engine, error) {
 		return nil, fmt.Errorf("%w: %v", ErrModelNotLoaded, err)
 	}
 
+	logger := cfg.Logger
+	if logger == nil {
+		logger = slog.New(slog.DiscardHandler)
+	}
+
 	e := &Engine{
 		cfg:      cfg,
 		personas: reg,
 		text:     tb,
 		defVoice: cfg.TTS.DefaultVoice,
 		sampleRt: cfg.TTS.SampleRate,
+		log:      logger,
 	}
 	if cfg.MaxConcurrent > 0 {
 		e.sem = make(chan struct{}, cfg.MaxConcurrent)
@@ -89,7 +97,20 @@ func New(cfg Config) (*Engine, error) {
 		}
 	}
 
+	e.log.Debug("engine created",
+		"text_backend", resolvedBackend(cfg.Text.Backend),
+		"tts_enabled", e.tts != nil,
+		"personas", len(reg.order),
+	)
 	return e, nil
+}
+
+// resolvedBackend reports the effective text backend name for logging.
+func resolvedBackend(name string) string {
+	if name == "" {
+		return "mock"
+	}
+	return name
 }
 
 // Personas exposes the persona store (read/save).
@@ -179,6 +200,7 @@ func (e *Engine) Generate(ctx context.Context, req Request) (Result, error) {
 		ContextTokens: e.cfg.Text.ContextTokens,
 	})
 	if err != nil {
+		e.log.Error("text generation failed", "persona", persona.ID, "event", req.Event, "err", err)
 		return Result{}, mapGenErr(err)
 	}
 
@@ -207,6 +229,7 @@ func (e *Engine) Generate(ctx context.Context, req Request) (Result, error) {
 			SampleRate: e.sampleRt,
 		})
 		if err != nil {
+			e.log.Error("speech synthesis failed", "persona", persona.ID, "event", req.Event, "err", err)
 			return Result{}, fmt.Errorf("%w: %v", ErrTTSUnavailable, err)
 		}
 		res.Audio = audio.Audio
@@ -215,6 +238,14 @@ func (e *Engine) Generate(ctx context.Context, req Request) (Result, error) {
 	}
 
 	res.Duration = time.Since(start)
+	e.log.Debug("narrated",
+		"persona", persona.ID,
+		"event", req.Event,
+		"tokens", res.Tokens,
+		"spoken", res.Spoken,
+		"silent", res.Silent,
+		"duration", res.Duration,
+	)
 	return res, nil
 }
 

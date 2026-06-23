@@ -1,8 +1,10 @@
 package narrata
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"log/slog"
 	"strings"
 	"sync"
 	"testing"
@@ -187,6 +189,29 @@ func TestConcurrentGenerate(t *testing.T) {
 	case <-done:
 	case <-time.After(5 * time.Second):
 		t.Fatal("concurrent generate deadlocked")
+	}
+}
+
+func TestLoggerReceivesMetadataNotData(t *testing.T) {
+	var buf bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	e := newTestEngine(t, Config{Logger: logger})
+
+	_, err := e.Generate(context.Background(), Request{
+		PersonaID: "narrator",
+		Event:     "secret_event",
+		Data:      map[string]any{"password": "hunter2-SECRET"},
+	})
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+
+	out := buf.String()
+	if !strings.Contains(out, "narrated") || !strings.Contains(out, "secret_event") {
+		t.Fatalf("expected metadata in log, got: %s", out)
+	}
+	if strings.Contains(out, "hunter2-SECRET") || strings.Contains(out, "password") {
+		t.Fatalf("log leaked event data: %s", out)
 	}
 }
 

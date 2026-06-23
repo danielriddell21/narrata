@@ -1,6 +1,9 @@
 package narrata
 
-import "time"
+import (
+	"log/slog"
+	"time"
+)
 
 // Config configures an [Engine]. The zero value is usable: with no text backend
 // specified, the Engine defaults to the deterministic "mock" backend so that
@@ -24,6 +27,11 @@ type Config struct {
 	// Timeout is the default per-request deadline. Zero means no default
 	// deadline (the caller's context still applies).
 	Timeout time.Duration
+
+	// Logger receives structured, host-controlled logs. When nil, logging is
+	// disabled. Narrata logs only metadata (persona, event name, and timings)
+	// and never the event data, preserving the local-first privacy model.
+	Logger *slog.Logger
 }
 
 // TextConfig selects and tunes the text backend.
