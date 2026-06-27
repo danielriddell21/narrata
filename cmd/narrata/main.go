@@ -84,7 +84,7 @@ func runValidate(args []string) error {
 	path := args[0]
 	info, err := os.Stat(path)
 	if err != nil {
-		return fmt.Errorf("validate: %v", err)
+		return fmt.Errorf("validate: %w", err)
 	}
 
 	var cfg narrata.Config
@@ -95,9 +95,9 @@ func runValidate(args []string) error {
 	}
 	engine, err := narrata.New(cfg)
 	if err != nil {
-		return err // already a typed, descriptive error
+		return fmt.Errorf("validate: %w", err)
 	}
-	defer engine.Close()
+	defer func() { _ = engine.Close() }()
 
 	// Count personas beyond the bundled defaults to report what the file added.
 	total := len(engine.Personas().List())
@@ -110,7 +110,7 @@ func runGen(args []string) error {
 	fs := flag.NewFlagSet("gen", flag.ContinueOnError)
 	out := fs.String("o", "", "write the persona JSON to this file instead of stdout")
 	if err := fs.Parse(args); err != nil {
-		return err
+		return fmt.Errorf("parse flags: %w", err)
 	}
 	desc := strings.TrimSpace(strings.Join(fs.Args(), " "))
 	if desc == "" {
@@ -119,20 +119,22 @@ func runGen(args []string) error {
 
 	persona, err := narrata.GeneratePersona(desc)
 	if err != nil {
-		return err
+		return fmt.Errorf("gen: %w", err)
 	}
 	data, err := json.MarshalIndent(persona, "", "  ")
 	if err != nil {
-		return err
+		return fmt.Errorf("gen: marshal persona: %w", err)
 	}
 	data = append(data, '\n')
 
 	if *out == "" {
-		_, err = os.Stdout.Write(data)
-		return err
+		if _, err := os.Stdout.Write(data); err != nil {
+			return fmt.Errorf("gen: write: %w", err)
+		}
+		return nil
 	}
-	if err := os.WriteFile(*out, data, 0o644); err != nil {
-		return err
+	if err := os.WriteFile(*out, data, 0o600); err != nil {
+		return fmt.Errorf("gen: write %s: %w", *out, err)
 	}
 	fmt.Fprintf(os.Stderr, "wrote %s (persona id %q)\n", *out, persona.ID)
 	return nil
@@ -150,7 +152,7 @@ func runGenerate(args []string) error {
 	maxWords := fs.Int("max-words", 0, "override the persona word limit")
 	instruction := fs.String("instruction", "", "optional one-off steering note")
 	if err := fs.Parse(args); err != nil {
-		return err
+		return fmt.Errorf("parse flags: %w", err)
 	}
 	if strings.TrimSpace(*event) == "" && strings.TrimSpace(*dataJSON) == "" {
 		return fmt.Errorf("generate: -event or -data is required")
@@ -159,7 +161,7 @@ func runGenerate(args []string) error {
 	var data any
 	if strings.TrimSpace(*dataJSON) != "" {
 		if err := json.Unmarshal([]byte(*dataJSON), &data); err != nil {
-			return fmt.Errorf("generate: parsing -data: %v", err)
+			return fmt.Errorf("generate: parsing -data: %w", err)
 		}
 	}
 
@@ -169,9 +171,9 @@ func runGenerate(args []string) error {
 		Text:         narrata.TextConfig{Backend: *backend},
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("generate: %w", err)
 	}
-	defer engine.Close()
+	defer func() { _ = engine.Close() }()
 
 	res, err := engine.Generate(context.Background(), narrata.Request{
 		PersonaID:   *persona,
@@ -182,7 +184,7 @@ func runGenerate(args []string) error {
 		Constraints: narrata.Constraints{MaxWords: *maxWords},
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("generate: %w", err)
 	}
 	fmt.Printf("[%s] %s\n", res.PersonaID, res.Text)
 	return nil
@@ -195,9 +197,9 @@ func runPersonas(args []string) error {
 	}
 	engine, err := narrata.New(narrata.Config{})
 	if err != nil {
-		return err
+		return fmt.Errorf("personas: %w", err)
 	}
-	defer engine.Close()
+	defer func() { _ = engine.Close() }()
 
 	for _, p := range engine.Personas().List() {
 		fmt.Printf("%-20s %s\n", p.ID, p.Description)

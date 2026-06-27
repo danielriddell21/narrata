@@ -49,7 +49,7 @@ func (r *registry) List() []Persona {
 // Save validates and upserts a persona.
 func (r *registry) Save(p Persona) error {
 	if err := validatePersona(p); err != nil {
-		return fmt.Errorf("%w: %v", ErrInvalidRequest, err)
+		return fmt.Errorf("%w: %w", ErrInvalidRequest, err)
 	}
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -88,7 +88,7 @@ func (r *registry) loadDefaults() error {
 func (r *registry) loadBytes(data []byte) error {
 	var pf personaFile
 	if err := json.Unmarshal(data, &pf); err != nil {
-		return fmt.Errorf("%w: parsing personas: %v", ErrInvalidRequest, err)
+		return fmt.Errorf("%w: parsing personas: %w", ErrInvalidRequest, err)
 	}
 	for _, p := range pf.Personas {
 		if err := r.Save(p); err != nil {
@@ -107,7 +107,7 @@ func (r *registry) loadBytes(data []byte) error {
 func (r *registry) loadFile(path string) error {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return fmt.Errorf("%w: reading personas file %q: %v", ErrInvalidRequest, path, err)
+		return fmt.Errorf("%w: reading personas file %q: %w", ErrInvalidRequest, path, err)
 	}
 	return r.loadBytes(data)
 }
@@ -117,7 +117,7 @@ func (r *registry) loadFile(path string) error {
 func (r *registry) loadDir(dir string) error {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
-		return fmt.Errorf("%w: reading personas dir %q: %v", ErrInvalidRequest, dir, err)
+		return fmt.Errorf("%w: reading personas dir %q: %w", ErrInvalidRequest, dir, err)
 	}
 	names := make([]string, 0, len(entries))
 	for _, e := range entries {
@@ -131,7 +131,7 @@ func (r *registry) loadDir(dir string) error {
 		path := filepath.Join(dir, name)
 		data, err := os.ReadFile(path)
 		if err != nil {
-			return fmt.Errorf("%w: reading persona %q: %v", ErrInvalidRequest, path, err)
+			return fmt.Errorf("%w: reading persona %q: %w", ErrInvalidRequest, path, err)
 		}
 		if err := r.loadPersonaFileOrDoc(data, path); err != nil {
 			return err
@@ -145,26 +145,29 @@ func (r *registry) loadDir(dir string) error {
 func (r *registry) loadPersonaFileOrDoc(data []byte, path string) error {
 	var probe map[string]json.RawMessage
 	if err := json.Unmarshal(data, &probe); err != nil {
-		return fmt.Errorf("%w: parsing persona %q: %v", ErrInvalidRequest, path, err)
+		return fmt.Errorf("%w: parsing persona %q: %w", ErrInvalidRequest, path, err)
 	}
 	if _, isDoc := probe["personas"]; isDoc {
 		return r.loadBytes(data)
 	}
 	var p Persona
 	if err := json.Unmarshal(data, &p); err != nil {
-		return fmt.Errorf("%w: parsing persona %q: %v", ErrInvalidRequest, path, err)
+		return fmt.Errorf("%w: parsing persona %q: %w", ErrInvalidRequest, path, err)
 	}
 	return r.Save(p)
 }
 
 // validatePersona maps a Persona onto the pure validator.
 func validatePersona(p Persona) error {
-	return validate.Persona(validate.PersonaSpec{
+	if err := validate.Persona(validate.PersonaSpec{
 		ID:           p.ID,
 		Name:         p.Name,
 		Description:  p.Description,
 		Rules:        p.Rules,
 		MaxWords:     p.Constraints.MaxWords,
 		MaxSentences: p.Constraints.MaxSentences,
-	})
+	}); err != nil {
+		return fmt.Errorf("validate persona: %w", err)
+	}
+	return nil
 }
