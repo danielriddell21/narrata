@@ -13,4 +13,4 @@
 | [research.md](./research.md) | Backend choices, risks, and rationale. |
 
 Build instructions for the experimental cgo backends live next to the code in
-[`pkg/backend/README.md`](../pkg/backend/README.md).
+[`backend/README.md`](../backend/README.md).

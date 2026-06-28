@@ -33,7 +33,7 @@ from the default build and CI so the pure-Go path stays green. They require
 local native libraries and target recent upstream C APIs that evolve between
 releases. Build instructions, required libraries, and the tunable tensor
 constants live next to the code in
-[`pkg/backend/README.md`](../pkg/backend/README.md).
+[`backend/README.md`](../backend/README.md).
 
 ```bash
 go build -tags llama ./...

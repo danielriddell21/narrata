@@ -104,7 +104,7 @@ narrata/
 Recommended public import:
 
 ```go
-import "github.com/danielriddell21/narrata/pkg/narrata"
+import "github.com/danielriddell21/narrata"
 ```
 
 ## 6. Core Components

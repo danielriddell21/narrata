@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/danielriddell21/narrata/pkg/backend/tts"
+	"github.com/danielriddell21/narrata/backend/tts"
 )
 
 // ExampleNew selects the mock TTS backend and synthesizes a short WAV buffer

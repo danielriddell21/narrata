@@ -14,7 +14,7 @@ or tool-calling framework. See [what Narrata is not](#what-narrata-is-not).
 ## Install
 
 ```bash
-go get github.com/danielriddell21/narrata/pkg/narrata
+go get github.com/danielriddell21/narrata
 ```
 
 Requires Go 1.26+.
@@ -30,7 +30,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/danielriddell21/narrata/pkg/narrata"
+	"github.com/danielriddell21/narrata"
 )
 
 func main() {

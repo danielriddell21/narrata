@@ -144,7 +144,7 @@ Exit criteria:
 
 ## Recommended First Build Order
 
-1. `pkg/narrata` public API.
+1. `narrata` public API.
 2. Scope guardrail checklist in README/spec.
 3. Persona schema and loader.
 4. Prompt builder.

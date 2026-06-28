@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/danielriddell21/narrata/backend/text"
+	"github.com/danielriddell21/narrata/backend/tts"
 	"github.com/danielriddell21/narrata/internal/policy"
 	"github.com/danielriddell21/narrata/internal/prompt"
 	"github.com/danielriddell21/narrata/internal/validate"
-	"github.com/danielriddell21/narrata/pkg/backend/text"
-	"github.com/danielriddell21/narrata/pkg/backend/tts"
 )
 
 // Engine is the embedded narration runtime. It is safe for concurrent use.

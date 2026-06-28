@@ -11,7 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/danielriddell21/narrata/pkg/narrata"
+	"github.com/danielriddell21/narrata"
 )
 
 // Execute builds and runs the root command. Returns non-nil on error.

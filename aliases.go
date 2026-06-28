@@ -1,8 +1,8 @@
 package narrata
 
 import (
-	"github.com/danielriddell21/narrata/pkg/backend/text"
-	"github.com/danielriddell21/narrata/pkg/backend/tts"
+	"github.com/danielriddell21/narrata/backend/text"
+	"github.com/danielriddell21/narrata/backend/tts"
 )
 
 // Public backend interface and value-type aliases. These let host apps and

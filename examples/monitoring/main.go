@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/danielriddell21/narrata/pkg/narrata"
+	"github.com/danielriddell21/narrata"
 )
 
 func main() {
