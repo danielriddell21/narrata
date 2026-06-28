@@ -27,7 +27,8 @@ import (
 	"github.com/danielriddell21/narrata/pkg/narrata"
 )
 
-const version = "0.1.0-dev"
+// version is overridden at release time via -ldflags "-X main.version=...".
+var version = "0.1.0-dev"
 
 const usage = `narrata is a development CLI for the Narrata narration runtime.
 
