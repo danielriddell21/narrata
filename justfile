@@ -22,7 +22,7 @@ examples:
 tidy:
 	go mod tidy
 
-# Build the experimental cgo backends (require local libs; see pkg/backend/README.md).
+# Build the experimental cgo backends (require local libs; see backend/README.md).
 build-llama:
 	go build -tags llama ./...
 
