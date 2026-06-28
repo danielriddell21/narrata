@@ -44,7 +44,7 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
-      - run: go build -o /dev/null ./cmd/narrata
+      - run: go build ./...
 
   mutate:
     name: Mutation test
