@@ -1,4 +1,5 @@
 # narrata
+
 *n.* the craft of telling what happened — turning structured events into a voice.
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/danielriddell21/narrata.svg)](https://pkg.go.dev/github.com/danielriddell21/narrata)
