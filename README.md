@@ -1,4 +1,10 @@
-# Narrata
+# narrata
+*n.* the craft of telling what happened — turning structured events into a voice.
+
+[![Go Reference](https://pkg.go.dev/badge/github.com/danielriddell21/narrata.svg)](https://pkg.go.dev/github.com/danielriddell21/narrata)
+[![CI](https://github.com/danielriddell21/narrata/actions/workflows/ci.yaml/badge.svg)](https://github.com/danielriddell21/narrata/actions/workflows/ci.yaml)
+[![Go 1.26](https://img.shields.io/badge/go-1.26-blue)](https://go.dev)
+[![MIT License](https://img.shields.io/badge/licence-MIT-green)](LICENSE)
 
 An embedded, local-first narration runtime for Go. Narrata turns structured
 data and events into short human-readable text and optional speech, shaped by
