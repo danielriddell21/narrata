@@ -39,18 +39,18 @@ model file required).
 
 | Flag | Description |
 |------|-------------|
-| `-persona` | Persona id (default: the configured default). |
-| `-event` | Event name, e.g. `door_opened`. |
-| `-data` | Event data as a JSON object. |
-| `-personas` | Path to a `personas.json` file. |
-| `-dir` | Path to a `personas/` directory. |
-| `-backend` | Text backend: `mock` or `template` (default `template`). |
-| `-max-words` | Override the persona word limit. |
-| `-instruction` | Optional one-off steering note. |
+| `--persona` | Persona id (default: the configured default). |
+| `--event` | Event name, e.g. `door_opened`. |
+| `--data` | Event data as a JSON object. |
+| `--personas` | Path to a `personas.json` file. |
+| `--dir` | Path to a `personas/` directory. |
+| `--backend` | Text backend: `mock` or `template` (default `template`). |
+| `--max-words` | Override the persona word limit. |
+| `--instruction` | Optional one-off steering note. |
 
 ```bash
-narrata generate -persona funny_narrator -event service_degraded \
-  -data '{"service":"payments-api","cpu":96}'
+narrata generate --persona funny_narrator --event service_degraded \
+  --data '{"service":"payments-api","cpu":96}'
 ```
 
 ### `personas`
