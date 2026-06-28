@@ -1,0 +1,35 @@
+# narrata
+
+> An embedded, local-first narration runtime for Go. Narrata turns structured events into in-character narration text (and optional speech) using pluggable, offline-friendly backends.
+
+narrata is importable as `github.com/danielriddell21/narrata` (the public library lives at the module root). It ships with deterministic, dependency-free text backends; the llama.cpp and kokoro backends are opt-in behind build tags.
+
+The central type is the Engine:
+
+```go
+type Engine struct{ /* ... */ }
+
+func New(cfg Config) (*Engine, error)
+func (e *Engine) Generate(ctx context.Context, req Request) (Result, error)
+func (e *Engine) Personas() PersonaStore
+func (e *Engine) Close() error
+```
+
+A minimal call:
+
+```go
+eng, _ := narrata.New(narrata.Config{Text: narrata.TextConfig{Backend: "template"}})
+defer eng.Close()
+res, _ := eng.Generate(ctx, narrata.Request{Event: "door_opened", Output: narrata.OutputText})
+fmt.Println(res.Text)
+```
+
+Personas drive the voice. `narrata.GeneratePersona(description)` scaffolds one from free text; persona files are validated on load. The `narrata` CLI (`cmd/narrata`) wraps the same library for validating, generating, and listing personas.
+
+## Docs
+
+- [pkg.go.dev reference](https://pkg.go.dev/github.com/danielriddell21/narrata)
+- [README](https://github.com/danielriddell21/narrata/blob/trunk/README.md)
+- [Architecture](https://github.com/danielriddell21/narrata/blob/trunk/docs/architecture.md)
+- [SDK guide](https://github.com/danielriddell21/narrata/blob/trunk/docs/sdk.md)
+- [Backends](https://github.com/danielriddell21/narrata/blob/trunk/docs/backends.md)
