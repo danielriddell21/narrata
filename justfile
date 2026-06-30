@@ -1,46 +1,58 @@
-# Narrata developer tasks. Run `just` to list recipes.
+# list available recipes
+default:
+    @just --list
 
-# Default pure-Go build (no cgo, no model files).
+# default pure-Go build (no cgo, no model files)
 [group('build')]
 build:
-	go build ./...
+    go build ./...
 
-[group('dev')]
-vet:
-	go vet ./...
-
-[group('dev')]
-lint:
-	golangci-lint run
-
+# run the tests
 [group('test')]
 test:
-	go test ./...
+    go test ./...
 
-[group('test')]
-test-race:
-	go test -race ./...
+# run the linter
+[group('dev')]
+lint:
+    golangci-lint run
 
-# Run the bundled examples end-to-end.
-[group('run')]
-examples:
-	go run ./examples/monitoring
-	go run ./examples/game
-	go run ./examples/home_automation
+# vet the code
+[group('dev')]
+vet:
+    go vet ./...
 
+# format the code
+[group('dev')]
+fmt:
+    gofmt -w .
+
+# tidy module dependencies
 [group('dev')]
 tidy:
-	go mod tidy
+    go mod tidy
 
-# Build the experimental cgo backends (require local libs; see backend/README.md).
+# full gate: lint + test + build. all must pass before committing
+[group('dev')]
+ci: lint test build
+
+# run the tests with the race detector
+[group('test')]
+test-race:
+    go test -race ./...
+
+# run the bundled examples end-to-end
+[group('run')]
+examples:
+    go run ./examples/monitoring
+    go run ./examples/game
+    go run ./examples/home_automation
+
+# build the experimental cgo backends (require local libs; see backend/README.md)
 [group('build')]
 build-llama:
-	go build -tags llama ./...
+    go build -tags llama ./...
 
 [group('build')]
 build-kokoro:
-	go build -tags kokoro ./...
-
-# Full gate: lint + test + build. All must pass before committing.
-[group('dev')]
-ci: lint test build
+    go build -tags kokoro ./...
