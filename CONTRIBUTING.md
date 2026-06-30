@@ -18,10 +18,16 @@ just examples      # run the bundled examples
 just tidy          # go mod tidy
 just build-llama   # build with the llama.cpp text backend
 just build-kokoro  # build with the kokoro TTS backend
-just all           # vet + test + build
+just lint          # golangci-lint
+just ci            # lint + test + build
 ```
 
-Run `just --list` to see every recipe. Lint with `golangci-lint run --config .golangci.yml` and run the tests before each commit. CI runs lint + test + build on every push to `trunk` and every pull request targeting `trunk`.
+Run `just --list` to see every recipe. Run `just ci` (lint + test + build) before each commit. CI runs the same gate on every push to `trunk` and every pull request targeting `trunk`.
+
+## Conventions
+
+The CLI entrypoint structure is shared across the tool family (unum is the
+reference). See [CONVENTIONS.md](CONVENTIONS.md) before changing the entrypoint.
 
 ## Project layout
 

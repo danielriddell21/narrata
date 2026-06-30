@@ -9,6 +9,10 @@ build:
 vet:
 	go vet ./...
 
+[group('dev')]
+lint:
+	golangci-lint run
+
 [group('test')]
 test:
 	go test ./...
@@ -37,6 +41,6 @@ build-llama:
 build-kokoro:
 	go build -tags kokoro ./...
 
-# Run the standard checks.
+# Full gate: lint + test + build. All must pass before committing.
 [group('dev')]
-all: build vet test
+ci: lint test build
