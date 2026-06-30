@@ -1,5 +1,3 @@
-// Package cli wires together the root Cobra command and all subcommands for the
-// narrata development CLI.
 package cli
 
 import (
@@ -14,7 +12,6 @@ import (
 	"github.com/danielriddell21/narrata"
 )
 
-// Execute builds and runs the root command. Returns non-nil on error.
 func Execute(version string) error {
 	root := &cobra.Command{
 		Use:   "narrata",
@@ -36,8 +33,6 @@ applications.`,
 	return nil
 }
 
-// validateCmd loads a personas file or directory through the engine, which
-// validates every persona, and reports the result.
 func validateCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:          "validate <path>",
@@ -71,7 +66,6 @@ func validateCmd() *cobra.Command {
 	}
 }
 
-// genCmd scaffolds a persona from a free-text description.
 func genCmd() *cobra.Command {
 	var out string
 	cmd := &cobra.Command{
@@ -111,7 +105,6 @@ func genCmd() *cobra.Command {
 	return cmd
 }
 
-// generateCmd renders a single event using the deterministic backends.
 func generateCmd() *cobra.Command {
 	var (
 		persona      string
@@ -177,7 +170,6 @@ func generateCmd() *cobra.Command {
 	return cmd
 }
 
-// personasCmd lists the bundled default personas.
 func personasCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:          "personas",

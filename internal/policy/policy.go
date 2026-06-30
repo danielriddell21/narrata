@@ -1,5 +1,3 @@
-// Package policy post-processes generated text to enforce host and persona
-// constraints. It is a pure leaf package (stdlib only).
 package policy
 
 import (
@@ -7,7 +5,6 @@ import (
 	"strings"
 )
 
-// Options control post-processing.
 type Options struct {
 	MaxWords       int
 	MaxSentences   int
@@ -16,27 +13,20 @@ type Options struct {
 	AllowSilence   bool
 }
 
-// Result is the processed output.
 type Result struct {
 	Text   string
 	Silent bool
 }
 
 var (
-	// Strip common markdown emphasis/structure when markdown is disallowed.
-	// Underscores are intentionally excluded: they appear inside ordinary
-	// tokens (e.g. "latency_ms") far more often than as emphasis here.
 	mdEmphasis = regexp.MustCompile("[*`#>]+")
 	mdLink     = regexp.MustCompile(`\[([^\]]*)\]\([^)]*\)`)
 	multiSpace = regexp.MustCompile(`[ \t]+`)
 	sentenceRe = regexp.MustCompile(`[^.!?]+[.!?]+|\S[^.!?]*$`)
 )
 
-// profanity is a deliberately small mask list; the goal is a basic gate, not a
-// comprehensive filter. Hosts that need more should pre/post-filter themselves.
 var profanity = []string{"fuck", "shit", "bastard", "asshole", "bitch"}
 
-// Apply runs the post-processing pipeline and returns the cleaned text.
 func Apply(text string, o Options) Result {
 	t := strings.TrimSpace(text)
 	t = stripCodeFences(t)
