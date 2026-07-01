@@ -3,7 +3,7 @@ package prompt
 import (
 	"encoding/json"
 	"fmt"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -139,7 +139,7 @@ func CompactData(data any) []string {
 	}
 	var lines []string
 	flatten("", decoded, &lines)
-	sort.Strings(lines)
+	slices.Sort(lines)
 	return lines
 }
 

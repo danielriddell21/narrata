@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sort"
+	"slices"
 	"sync"
 
 	"github.com/danielriddell21/narrata/internal/validate"
@@ -17,10 +17,10 @@ var defaultPersonasJSON []byte
 
 // registry is an in-memory PersonaStore. It is safe for concurrent use.
 type registry struct {
-	mu      sync.RWMutex
-	byID    map[string]Persona
-	order   []string
-	defawlt string
+	mu             sync.RWMutex
+	byID           map[string]Persona
+	order          []string
+	defaultPersona string
 }
 
 func newRegistry() *registry {
@@ -65,9 +65,9 @@ func (r *registry) Save(p Persona) error {
 func (r *registry) defaultID() string {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	if r.defawlt != "" {
-		if _, ok := r.byID[r.defawlt]; ok {
-			return r.defawlt
+	if r.defaultPersona != "" {
+		if _, ok := r.byID[r.defaultPersona]; ok {
+			return r.defaultPersona
 		}
 	}
 	if _, ok := r.byID["narrator"]; ok {
@@ -97,7 +97,7 @@ func (r *registry) loadBytes(data []byte) error {
 	}
 	if pf.Default != "" {
 		r.mu.Lock()
-		r.defawlt = pf.Default
+		r.defaultPersona = pf.Default
 		r.mu.Unlock()
 	}
 	return nil
@@ -126,7 +126,7 @@ func (r *registry) loadDir(dir string) error {
 		}
 		names = append(names, e.Name())
 	}
-	sort.Strings(names) // deterministic load order
+	slices.Sort(names) // deterministic load order
 	for _, name := range names {
 		path := filepath.Join(dir, name)
 		data, err := os.ReadFile(path)

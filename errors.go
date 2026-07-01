@@ -12,6 +12,9 @@ var (
 	ErrModelNotLoaded = errors.New("narrata: model not loaded")
 	// ErrGenerationTimeout means generation exceeded the deadline.
 	ErrGenerationTimeout = errors.New("narrata: generation timed out")
+	// ErrGeneration means text generation failed for a reason other than a
+	// timeout or a missing model, such as a mid-stream decode failure.
+	ErrGeneration = errors.New("narrata: generation failed")
 	// ErrTTSUnavailable means speech was requested but TTS is disabled or
 	// failed to initialise.
 	ErrTTSUnavailable = errors.New("narrata: text-to-speech unavailable")

@@ -83,8 +83,6 @@ type Constraints struct {
 	MaxWords int
 	// MaxSentences caps the output sentence count. Zero defers to the persona.
 	MaxSentences int
-	// AllowHumour permits humorous phrasing for this request.
-	AllowHumour bool
 	// AllowProfanity permits profanity for this request.
 	AllowProfanity bool
 	// Format selects the output surface (plain prose or markdown).

@@ -117,7 +117,6 @@ type Request struct {
 type Constraints struct {
     MaxWords int
     MaxSentences int
-    AllowHumour bool
     AllowProfanity bool
     Format Format
 }

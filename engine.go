@@ -47,7 +47,7 @@ func New(cfg Config) (*Engine, error) {
 		if _, ok := reg.Get(cfg.DefaultPersona); !ok {
 			return nil, fmt.Errorf("%w: default persona %q", ErrPersonaNotFound, cfg.DefaultPersona)
 		}
-		reg.defawlt = cfg.DefaultPersona
+		reg.defaultPersona = cfg.DefaultPersona
 	}
 
 	tb, err := text.New(text.Options{
@@ -285,6 +285,6 @@ func mapGenErr(err error) error {
 	case errors.Is(err, context.Canceled):
 		return err
 	default:
-		return fmt.Errorf("%w: %w", ErrModelNotLoaded, err)
+		return fmt.Errorf("%w: %w", ErrGeneration, err)
 	}
 }
