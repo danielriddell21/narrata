@@ -2,6 +2,7 @@ package text
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/danielriddell21/narrata/internal/prompt"
@@ -22,7 +23,7 @@ func NewMock() *Mock { return &Mock{} }
 // derived purely from the prompt's Event/Data block.
 func (m *Mock) Generate(ctx context.Context, p string, _ GenerateOptions) (Result, error) {
 	if err := ctx.Err(); err != nil {
-		return Result{}, err
+		return Result{}, fmt.Errorf("mock text backend: %w", err)
 	}
 	event, dataLines := prompt.ParseEventData(p)
 

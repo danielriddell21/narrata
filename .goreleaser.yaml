@@ -1,0 +1,63 @@
+version: 2
+
+project_name: narrata
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  # Headless CLI: CGO-free, cross-compiled to every desktop OS/arch.
+  - id: narrata
+    main: ./cmd/narrata
+    binary: narrata
+    env:
+      - CGO_ENABLED=0
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+    ldflags:
+      - -s -w -X main.version={{ .Version }}
+
+archives:
+  - id: narrata
+    ids: [narrata]
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - Merge pull request
+      - Merge branch
+
+release:
+  name_template: "v{{ .Version }}"
+
+# Homebrew formula: the cross-platform CLI (macOS + Linux + Windows).
+brews:
+  - name: narrata
+    ids: [narrata]
+    repository:
+      owner: danielriddell21
+      name: homebrew-tap
+      branch: trunk
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    directory: Formula
+    homepage: https://github.com/danielriddell21/narrata
+    description: "An embedded, local-first narration runtime for Go"
+    license: MIT
+    commit_msg_template: "Brew formula update for narrata {{ .Tag }}"
+    install: |
+      bin.install "narrata"
+    test: |
+      system "#{bin}/narrata", "--version"

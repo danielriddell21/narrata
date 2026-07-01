@@ -1,5 +1,3 @@
-// Package policy post-processes generated text to enforce host and persona
-// constraints. It is a pure leaf package (stdlib only).
 package policy
 
 import (
@@ -7,7 +5,6 @@ import (
 	"strings"
 )
 
-// Options control post-processing.
 type Options struct {
 	MaxWords       int
 	MaxSentences   int
@@ -16,27 +13,27 @@ type Options struct {
 	AllowSilence   bool
 }
 
-// Result is the processed output.
 type Result struct {
 	Text   string
 	Silent bool
 }
 
 var (
-	// Strip common markdown emphasis/structure when markdown is disallowed.
-	// Underscores are intentionally excluded: they appear inside ordinary
-	// tokens (e.g. "latency_ms") far more often than as emphasis here.
 	mdEmphasis = regexp.MustCompile("[*`#>]+")
 	mdLink     = regexp.MustCompile(`\[([^\]]*)\]\([^)]*\)`)
 	multiSpace = regexp.MustCompile(`[ \t]+`)
 	sentenceRe = regexp.MustCompile(`[^.!?]+[.!?]+|\S[^.!?]*$`)
 )
 
-// profanity is a deliberately small mask list; the goal is a basic gate, not a
-// comprehensive filter. Hosts that need more should pre/post-filter themselves.
-var profanity = []string{"fuck", "shit", "bastard", "asshole", "bitch"}
+var profanityRes = func() []*regexp.Regexp {
+	words := []string{"fuck", "shit", "bastard", "asshole", "bitch"}
+	res := make([]*regexp.Regexp, len(words))
+	for i, w := range words {
+		res[i] = regexp.MustCompile(`(?i)\b` + regexp.QuoteMeta(w) + `\b`)
+	}
+	return res
+}()
 
-// Apply runs the post-processing pipeline and returns the cleaned text.
 func Apply(text string, o Options) Result {
 	t := strings.TrimSpace(text)
 	t = stripCodeFences(t)
@@ -106,8 +103,7 @@ func collapseWhitespace(t string) string {
 }
 
 func maskProfanity(t string) string {
-	for _, w := range profanity {
-		re := regexp.MustCompile(`(?i)\b` + regexp.QuoteMeta(w) + `\b`)
+	for _, re := range profanityRes {
 		t = re.ReplaceAllStringFunc(t, func(m string) string {
 			if len(m) <= 1 {
 				return m
@@ -118,24 +114,24 @@ func maskProfanity(t string) string {
 	return t
 }
 
-func limitSentences(t string, max int) string {
+func limitSentences(t string, limit int) string {
 	matches := sentenceRe.FindAllString(t, -1)
-	if len(matches) <= max {
+	if len(matches) <= limit {
 		return t
 	}
-	var kept []string
-	for i := 0; i < max && i < len(matches); i++ {
-		kept = append(kept, strings.TrimSpace(matches[i]))
+	kept := make([]string, 0, limit)
+	for _, m := range matches[:min(limit, len(matches))] {
+		kept = append(kept, strings.TrimSpace(m))
 	}
 	return strings.Join(kept, " ")
 }
 
-func limitWords(t string, max int) string {
+func limitWords(t string, limit int) string {
 	words := strings.Fields(t)
-	if len(words) <= max {
+	if len(words) <= limit {
 		return t
 	}
-	truncated := strings.Join(words[:max], " ")
+	truncated := strings.Join(words[:limit], " ")
 	// Preserve terminal punctuation if the truncation cut it off.
 	if !strings.HasSuffix(truncated, ".") && !strings.HasSuffix(truncated, "!") &&
 		!strings.HasSuffix(truncated, "?") {

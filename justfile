@@ -1,33 +1,53 @@
-# Narrata developer tasks. Run `just` to list recipes.
+# list available recipes
+default:
+    @just --list
 
-# Default pure-Go build (no cgo, no model files).
+# default pure-Go build (no cgo, no model files)
+[group('build')]
 build:
-	go build ./...
+    go build ./...
 
-vet:
-	go vet ./...
-
+# run the tests
+[group('test')]
 test:
-	go test ./...
+    go test ./...
 
-test-race:
-	go test -race ./...
+# run the linter
+[group('dev')]
+lint:
+    golangci-lint run
 
-# Run the bundled examples end-to-end.
-examples:
-	go run ./examples/monitoring
-	go run ./examples/game
-	go run ./examples/home_automation
+# format the code
+[group('dev')]
+fmt:
+    golangci-lint fmt
 
+# tidy module dependencies
+[group('dev')]
 tidy:
-	go mod tidy
+    go mod tidy
 
-# Build the experimental cgo backends (require local libs; see pkg/backend/README.md).
+# full gate: lint + test + build. all must pass before committing
+[group('dev')]
+ci: lint test build
+
+# run the tests with the race detector
+[group('test')]
+test-race:
+    go test -race ./...
+
+# run the bundled examples end-to-end
+[group('run')]
+examples:
+    go run ./examples/monitoring
+    go run ./examples/game
+    go run ./examples/home_automation
+
+# build the experimental cgo backends (require local libs; see backend/README.md)
+[group('build')]
 build-llama:
-	go build -tags llama ./...
+    go build -tags llama ./...
 
+[group('build')]
 build-kokoro:
-	go build -tags kokoro ./...
-
-# Run the standard checks.
-all: build vet test
+    go build -tags kokoro ./...

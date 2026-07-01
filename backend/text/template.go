@@ -2,6 +2,7 @@ package text
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/danielriddell21/narrata/internal/prompt"
@@ -20,7 +21,7 @@ func NewTemplate() *Template { return &Template{} }
 // data block, e.g. "Washing machine done — room: utility room, cycle: cottons."
 func (t *Template) Generate(ctx context.Context, p string, _ GenerateOptions) (Result, error) {
 	if err := ctx.Err(); err != nil {
-		return Result{}, err
+		return Result{}, fmt.Errorf("template backend: %w", err)
 	}
 	event, dataLines := prompt.ParseEventData(p)
 

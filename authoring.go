@@ -42,7 +42,7 @@ func GeneratePersona(description string) (Persona, error) {
 		},
 	}
 	if err := validatePersona(p); err != nil {
-		return Persona{}, fmt.Errorf("%w: %v", ErrInvalidRequest, err)
+		return Persona{}, fmt.Errorf("%w: %w", ErrInvalidRequest, err)
 	}
 	return p, nil
 }
@@ -108,7 +108,7 @@ func voiceFor(tone string) string {
 // and joins up to maxWords words with underscores.
 func slugify(s string, maxWords int) string {
 	fields := strings.FieldsFunc(strings.ToLower(s), func(r rune) bool {
-		return !(r >= 'a' && r <= 'z') && !(r >= '0' && r <= '9')
+		return (r < 'a' || r > 'z') && (r < '0' || r > '9')
 	})
 	stop := map[string]bool{
 		"for": true, "a": true, "an": true, "the": true, "of": true,

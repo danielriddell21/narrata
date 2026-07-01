@@ -21,7 +21,7 @@ import (
     "context"
     "fmt"
 
-    "github.com/danielriddell21/narrata/pkg/narrata"
+    "github.com/danielriddell21/narrata"
 )
 
 func main() {
@@ -117,7 +117,6 @@ type Request struct {
 type Constraints struct {
     MaxWords int
     MaxSentences int
-    AllowHumour bool
     AllowProfanity bool
     Format Format
 }

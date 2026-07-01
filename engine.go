@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/danielriddell21/narrata/backend/text"
+	"github.com/danielriddell21/narrata/backend/tts"
 	"github.com/danielriddell21/narrata/internal/policy"
 	"github.com/danielriddell21/narrata/internal/prompt"
 	"github.com/danielriddell21/narrata/internal/validate"
-	"github.com/danielriddell21/narrata/pkg/backend/text"
-	"github.com/danielriddell21/narrata/pkg/backend/tts"
 )
 
 // Engine is the embedded narration runtime. It is safe for concurrent use.
@@ -47,7 +47,7 @@ func New(cfg Config) (*Engine, error) {
 		if _, ok := reg.Get(cfg.DefaultPersona); !ok {
 			return nil, fmt.Errorf("%w: default persona %q", ErrPersonaNotFound, cfg.DefaultPersona)
 		}
-		reg.defawlt = cfg.DefaultPersona
+		reg.defaultPersona = cfg.DefaultPersona
 	}
 
 	tb, err := text.New(text.Options{
@@ -59,7 +59,7 @@ func New(cfg Config) (*Engine, error) {
 		MaxTokens:     cfg.Text.MaxTokens,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrModelNotLoaded, err)
+		return nil, fmt.Errorf("%w: %w", ErrModelNotLoaded, err)
 	}
 
 	e := &Engine{
@@ -118,7 +118,7 @@ func (e *Engine) Generate(ctx context.Context, req Request) (Result, error) {
 		HasData:        req.Data != nil,
 		HasInstruction: req.Instruction != "",
 	}); err != nil {
-		return Result{}, fmt.Errorf("%w: %v", ErrInvalidRequest, err)
+		return Result{}, fmt.Errorf("%w: %w", ErrInvalidRequest, err)
 	}
 
 	personaID := req.PersonaID
@@ -134,7 +134,7 @@ func (e *Engine) Generate(ctx context.Context, req Request) (Result, error) {
 	wantText := req.Output.wantsText()
 	if wantSpeech && e.tts == nil {
 		if e.ttsErr != nil {
-			return Result{}, fmt.Errorf("%w: %v", ErrTTSUnavailable, e.ttsErr)
+			return Result{}, fmt.Errorf("%w: %w", ErrTTSUnavailable, e.ttsErr)
 		}
 		return Result{}, ErrTTSUnavailable
 	}
@@ -207,7 +207,7 @@ func (e *Engine) Generate(ctx context.Context, req Request) (Result, error) {
 			SampleRate: e.sampleRt,
 		})
 		if err != nil {
-			return Result{}, fmt.Errorf("%w: %v", ErrTTSUnavailable, err)
+			return Result{}, fmt.Errorf("%w: %w", ErrTTSUnavailable, err)
 		}
 		res.Audio = audio.Audio
 		res.AudioFormat = audio.Format
@@ -227,13 +227,16 @@ func (e *Engine) voiceFor(p Persona) string {
 
 func (e *Engine) acquire(ctx context.Context) error {
 	if e.sem == nil {
-		return ctx.Err()
+		if err := ctx.Err(); err != nil {
+			return fmt.Errorf("acquire: %w", err)
+		}
+		return nil
 	}
 	select {
 	case e.sem <- struct{}{}:
 		return nil
 	case <-ctx.Done():
-		return ctx.Err()
+		return fmt.Errorf("acquire: %w", ctx.Err())
 	}
 }
 
@@ -278,10 +281,10 @@ func effectiveConstraints(p Persona, req Request) effective {
 func mapGenErr(err error) error {
 	switch {
 	case errors.Is(err, context.DeadlineExceeded):
-		return fmt.Errorf("%w: %v", ErrGenerationTimeout, err)
+		return fmt.Errorf("%w: %w", ErrGenerationTimeout, err)
 	case errors.Is(err, context.Canceled):
 		return err
 	default:
-		return fmt.Errorf("%w: %v", ErrModelNotLoaded, err)
+		return fmt.Errorf("%w: %w", ErrGeneration, err)
 	}
 }

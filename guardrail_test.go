@@ -20,7 +20,7 @@ var forbidden = []string{
 // the agent/assistant concepts Narrata explicitly excludes.
 func TestNoForbiddenExportedIdentifiers(t *testing.T) {
 	fset := token.NewFileSet()
-	pkgs, err := parser.ParseDir(fset, ".", nil, 0)
+	pkgs, err := parser.ParseDir(fset, ".", nil, 0) //nolint:staticcheck // single-package guardrail scan; build-tag handling is irrelevant here
 	if err != nil {
 		t.Fatalf("parsing package: %v", err)
 	}

@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/danielriddell21/narrata/pkg/narrata"
+	"github.com/danielriddell21/narrata"
 )
 
 type player struct {

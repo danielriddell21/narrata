@@ -76,6 +76,6 @@ The deterministic backends render personas without any model file, so you can
 iterate on tone and constraints immediately:
 
 ```bash
-narrata generate -persona incident_reporter -event service_degraded \
-  -data '{"service":"payments-api","latency_ms":950}' -personas personas.json
+narrata generate --persona incident_reporter --event service_degraded \
+  --data '{"service":"payments-api","latency_ms":950}' --personas personas.json
 ```

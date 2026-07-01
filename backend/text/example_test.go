@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/danielriddell21/narrata/pkg/backend/text"
+	"github.com/danielriddell21/narrata/backend/text"
 )
 
 // ExampleNew selects the pure-Go template backend and generates a line from a

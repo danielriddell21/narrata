@@ -1,13 +1,27 @@
-# Binaries
+# Build output
 /bin/
+/dist/
+
+# Go build & test artifacts
 *.exe
+*.test
 *.out
+*.prof
+coverage.txt
+coverage.html
+
+# Editor / OS
+.DS_Store
+.idea/
+*.swp
+*~
+
+# Env / local
+.env
+.env.local
+.claude/
 
 # Model assets (provided by host apps, not committed)
 *.gguf
 *.onnx
 /models/
-
-# Go
-*.test
-*.prof

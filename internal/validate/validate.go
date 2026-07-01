@@ -1,7 +1,3 @@
-// Package validate holds pure validation helpers for personas and requests.
-// It deliberately operates on plain fields rather than importing the public
-// narrata package, so that the public package can depend on it without an
-// import cycle.
 package validate
 
 import (
@@ -9,7 +5,6 @@ import (
 	"strings"
 )
 
-// PersonaSpec is the minimal view of a persona needed for validation.
 type PersonaSpec struct {
 	ID           string
 	Name         string
@@ -19,8 +14,6 @@ type PersonaSpec struct {
 	MaxSentences int
 }
 
-// Persona checks that a persona is well formed. The returned error is nil when
-// valid; otherwise its message names the offending field.
 func Persona(p PersonaSpec) error {
 	if strings.TrimSpace(p.ID) == "" {
 		return fmt.Errorf("persona: id is required")
@@ -46,14 +39,12 @@ func Persona(p PersonaSpec) error {
 	return nil
 }
 
-// RequestSpec is the minimal view of a request needed for validation.
 type RequestSpec struct {
 	Event          string
 	HasData        bool
 	HasInstruction bool
 }
 
-// Request checks that a request carries something to narrate.
 func Request(r RequestSpec) error {
 	if strings.TrimSpace(r.Event) == "" && !r.HasData && !r.HasInstruction {
 		return fmt.Errorf("request: one of event, data, or instruction is required")

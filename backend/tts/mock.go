@@ -3,6 +3,7 @@ package tts
 import (
 	"context"
 	"encoding/binary"
+	"fmt"
 )
 
 // defaultSampleRate is used when no sample rate is configured.
@@ -26,7 +27,7 @@ func NewMock(sampleRate int) *Mock {
 // Speak returns a deterministic WAV buffer sized from the text length.
 func (m *Mock) Speak(ctx context.Context, text string, opts SpeakOptions) (Result, error) {
 	if err := ctx.Err(); err != nil {
-		return Result{}, err
+		return Result{}, fmt.Errorf("mock tts backend: %w", err)
 	}
 	rate := m.sampleRate
 	if opts.SampleRate > 0 {

@@ -1,22 +1,13 @@
-// Package prompt builds compact model prompts from a persona and a request.
-// It is a pure leaf package (stdlib only) so the public narrata package can
-// import it without an import cycle.
-//
-// The prompt format is deliberately stable: it keeps persona rules separate
-// from host data, repeatedly frames the task as narration rather than chat,
-// and exposes the event/data in a simple block that offline backends (mock,
-// template) can parse deterministically while an LLM reads it as prose.
 package prompt
 
 import (
 	"encoding/json"
 	"fmt"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 )
 
-// Input is the flattened view of persona + request needed to build a prompt.
 type Input struct {
 	PersonaName string
 	Description string
@@ -31,18 +22,16 @@ type Input struct {
 	AllowMarkdown bool
 
 	Event       string
-	DataLines   []string // pre-compacted "key: value" lines, in stable order
+	DataLines   []string
 	Instruction string
 }
 
-// Markers used in the prompt body. Offline backends rely on these.
 const (
 	eventPrefix = "Event: "
 	dataHeader  = "Data:"
 	dataBullet  = "- "
 )
 
-// Build assembles the prompt string.
 func Build(in Input) string {
 	var b strings.Builder
 
@@ -136,10 +125,6 @@ func orDefault(v, def string) string {
 	return v
 }
 
-// CompactData flattens an arbitrary JSON-serialisable value into stable,
-// sorted "key: value" lines suitable for prompting. Nested objects are
-// dotted (e.g. "player.health: 8"). Non-object values render as a single
-// "value: ..." line. The output is deterministic for golden tests.
 func CompactData(data any) []string {
 	if data == nil {
 		return nil
@@ -154,7 +139,7 @@ func CompactData(data any) []string {
 	}
 	var lines []string
 	flatten("", decoded, &lines)
-	sort.Strings(lines)
+	slices.Sort(lines)
 	return lines
 }
 
@@ -204,9 +189,6 @@ func scalar(v any) string {
 	}
 }
 
-// ParseEventData extracts the event name and data lines from a prompt built by
-// Build. Offline backends use it to produce deterministic narration without a
-// model. The returned data lines retain their "key: value" form.
 func ParseEventData(prompt string) (event string, dataLines []string) {
 	inData := false
 	for _, line := range strings.Split(prompt, "\n") {
