@@ -71,13 +71,8 @@ var openersByTone = map[string][]string{
 	"aggressive":   {"", "Boom — ", "There it is — "},
 }
 
-// openersFor returns the opener pool for a style. When humour is off, colourful
-// openers are dropped so the voice stays plain.
-func openersFor(style Style, tone string) []string {
-	pool, ok := openersByTone[tone]
-	if !ok {
-		pool = openersByTone["neutral"]
-	}
+// gateOpeners drops colourful openers when humour is off so the voice stays plain.
+func gateOpeners(pool []string, style Style) []string {
 	if style.Humour == "" || style.Humour == "none" {
 		plain := pool[:0:0]
 		for _, o := range pool {
@@ -98,10 +93,10 @@ var wittyOpeners = map[string]bool{
 	"Of course, ": true, "Naturally, ": true, "Boom — ": true, "There it is — ": true,
 }
 
-// compose builds a single line: opener + event clause + data clause, flavoured by
-// the style and bounded by cons.
-func compose(style Style, eventPhrase string, phrases []string, r *rng, cons Constraints) string {
-	opener := r.pick(openersFor(style, style.Tone))
+// compose builds a single line: opener + event clause + data clause, bounded by
+// cons. The opener pool is resolved and gated by the caller.
+func compose(openers []string, eventPhrase string, phrases []string, r *rng, cons Constraints) string {
+	opener := r.pick(openers)
 	phrases = fitPhrases(opener+eventPhrase, phrases, cons)
 
 	var dc string

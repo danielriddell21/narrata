@@ -194,6 +194,13 @@ lets hosts supply their own grammar to extend it.
 
 ## Phased plan
 
+**Status: Phases 1–6 implemented** on `exp/pure-go-backends` (package `nlg`, with
+`narrate`/`describe`/`summarize`/`classify`/`extract`, event-shape templates,
+salience + realizers, constraint-aware expansion, `WithFallback`/`ErrNeedsModel`,
+`WithOpeners` extensibility, tests, benchmarks, and a godoc example). The
+`native` text backend routes through it.
+
+
 1. **`nlg` core** — package, `Client`/`Persona`/`Task`/`Constraints`, seeded
    grammar expansion (port + generalise `native`), `narrate`. `native` backend
    adapts to `nlg`.

@@ -93,6 +93,7 @@ type Client struct {
 	personas map[string]Persona
 	def      string
 	fallback Backend
+	openers  map[string][]string // per-tone opener overrides
 }
 
 // Option configures a Client.
@@ -145,6 +146,30 @@ func WithDefaultPersona(id string) Option {
 // WithFallback sets the model backend used for open-ended intents.
 func WithFallback(b Backend) Option {
 	return func(c *Client) error { c.fallback = b; return nil }
+}
+
+// WithOpeners overrides the opener phrase pool for a tone, letting hosts extend
+// or replace the built-in grammar. An empty string in openers means "no opener".
+func WithOpeners(tone string, openers []string) Option {
+	return func(c *Client) error {
+		if c.openers == nil {
+			c.openers = make(map[string][]string)
+		}
+		c.openers[tone] = openers
+		return nil
+	}
+}
+
+// openerPool resolves the opener pool for a style: a per-client override for the
+// tone if present, else the built-in pool, gated by humour.
+func (c *Client) openerPool(style Style) []string {
+	pool, ok := c.openers[style.Tone]
+	if !ok {
+		if pool, ok = openersByTone[style.Tone]; !ok {
+			pool = openersByTone["neutral"]
+		}
+	}
+	return gateOpeners(pool, style)
 }
 
 // Persona returns a registered persona by id.
@@ -205,7 +230,7 @@ func (c *Client) narrate(t Task, style Style, cons Constraints) string {
 	sh, noun, action := classifyEvent(t.Event)
 	if sh == shapeGeneric {
 		fields = salient(fields, maxFields(style, cons))
-		return compose(style, humanizeEvent(t.Event), realizeAll(fields), r, cons)
+		return compose(c.openerPool(style), humanizeEvent(t.Event), realizeAll(fields), r, cons)
 	}
 
 	subject, rest := subjectPhrase(noun, fields)
