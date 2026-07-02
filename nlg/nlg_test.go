@@ -128,6 +128,29 @@ func TestHumourGatingSuppressesColourfulOpeners(t *testing.T) {
 	}
 }
 
+func TestSubjectSubstitution(t *testing.T) {
+	c := mustClient(t)
+	// A field matching the event's subject noun becomes the sentence subject.
+	res, _ := c.Generate(context.Background(), Task{
+		Event: "service_degraded",
+		Data:  map[string]any{"service": "payments-api", "cpu": 96},
+	})
+	if !strings.HasPrefix(res.Text, "Payments-api") {
+		t.Fatalf("expected subject substitution, got %q", res.Text)
+	}
+}
+
+func TestShapedSentences(t *testing.T) {
+	c := mustClient(t)
+	for _, ev := range []string{"washing_machine_done", "door_opened", "server_offline"} {
+		res, _ := c.Generate(context.Background(), Task{Event: ev, Seed: 1})
+		// A shaped sentence starts with "The " and is a full clause, not "Event (data)".
+		if !strings.HasPrefix(res.Text, "The ") || strings.Contains(res.Text, "(") {
+			t.Fatalf("event %q not shaped into a sentence: %q", ev, res.Text)
+		}
+	}
+}
+
 func TestOpenEndedNeedsModel(t *testing.T) {
 	c := mustClient(t)
 	if _, err := c.Generate(context.Background(), Task{Intent: Summarize, Event: "x"}); !errors.Is(err, ErrNeedsModel) {

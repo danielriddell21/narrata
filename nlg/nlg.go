@@ -189,11 +189,27 @@ func (c *Client) resolve(t Task) (Persona, Style) {
 	return p, p.Style
 }
 
-// narrate builds a line from the task's event and data.
+// narrate builds a line from the task's event and data. Known event shapes
+// (completion, threshold, arrival, departure, change) produce a proper sentence;
+// unclassified events fall back to a tone-flavoured "event (data)" fragment.
 func (c *Client) narrate(t Task, style Style, cons Constraints) string {
-	fields := salient(withKinds(fieldsOf(t)), maxFields(style, cons))
 	r := newRNG(seedFor(t, style))
-	return compose(style, humanizeEvent(t.Event), realizeAll(fields), r, cons)
+	fields := withKinds(fieldsOf(t))
+
+	sh, noun, action := classifyEvent(t.Event)
+	if sh == shapeGeneric {
+		fields = salient(fields, maxFields(style, cons))
+		return compose(style, humanizeEvent(t.Event), realizeAll(fields), r, cons)
+	}
+
+	subject, rest := subjectPhrase(noun, fields)
+	rest = salient(rest, maxFields(style, cons))
+
+	clause := capitalise(clauseFor(sh, action, subject, r))
+	if p := realizeAll(rest); len(p) > 0 {
+		clause += " — " + strings.Join(p, ", ")
+	}
+	return applyBudget(clause+".", cons)
 }
 
 // describe produces a snapshot of a subject and its state, rather than an event
