@@ -29,7 +29,7 @@ func (n *Native) Generate(ctx context.Context, p string, _ GenerateOptions) (Res
 		return Result{}, fmt.Errorf("native backend: %w", err)
 	}
 	event, dataLines := prompt.ParseEventData(p)
-	style := nlg.Style{Tone: parseTone(p)}
+	style := parseStyle(p)
 
 	res, err := n.client.Generate(ctx, nlg.Task{
 		Intent: nlg.Narrate,
@@ -46,13 +46,23 @@ func (n *Native) Generate(ctx context.Context, p string, _ GenerateOptions) (Res
 // Close is a no-op.
 func (n *Native) Close() error { return nil }
 
-// parseTone extracts the persona tone from the prompt's "Style: tone=..." line.
-func parseTone(p string) string {
-	i := strings.Index(p, "tone=")
-	if i < 0 {
-		return "neutral"
+// parseStyle extracts the persona style from the prompt's "Style: tone=...,
+// energy=..., humour=..., verbosity=..." line.
+func parseStyle(p string) nlg.Style {
+	return nlg.Style{
+		Tone:      styleField(p, "tone"),
+		Energy:    styleField(p, "energy"),
+		Humour:    styleField(p, "humour"),
+		Verbosity: styleField(p, "verbosity"),
 	}
-	rest := p[i+len("tone="):]
+}
+
+func styleField(p, key string) string {
+	i := strings.Index(p, key+"=")
+	if i < 0 {
+		return ""
+	}
+	rest := p[i+len(key)+1:]
 	for j, r := range rest {
 		if r == ',' || r == '\n' {
 			return strings.TrimSpace(rest[:j])

@@ -18,6 +18,7 @@ package nlg
 import (
 	"context"
 	"errors"
+	"strings"
 )
 
 // ErrNeedsModel is returned when a task needs a real language model but no
@@ -166,8 +167,10 @@ func (c *Client) Generate(ctx context.Context, t Task) (Result, error) {
 	cons := mergeConstraints(persona.Constraints, t.Constraints)
 
 	switch intent {
-	case Narrate, Describe:
+	case Narrate:
 		return Result{Text: c.narrate(t, style, cons)}, nil
+	case Describe:
+		return Result{Text: c.describe(t, style, cons)}, nil
 	default:
 		return c.viaFallback(ctx, t)
 	}
@@ -188,20 +191,73 @@ func (c *Client) resolve(t Task) (Persona, Style) {
 
 // narrate builds a line from the task's event and data.
 func (c *Client) narrate(t Task, style Style, cons Constraints) string {
-	fields := t.Fields
-	if fields == nil {
-		fields = flattenData(t.Data)
-	}
-	fields = withKinds(fields)
-	fields = salient(fields, maxFields(style, cons))
-
-	phrases := make([]string, 0, len(fields))
-	for _, f := range fields {
-		phrases = append(phrases, realize(f))
-	}
-
+	fields := salient(withKinds(fieldsOf(t)), maxFields(style, cons))
 	r := newRNG(seedFor(t, style))
-	return compose(style.Tone, humanizeEvent(t.Event), phrases, r, cons)
+	return compose(style, humanizeEvent(t.Event), realizeAll(fields), r, cons)
+}
+
+// describe produces a snapshot of a subject and its state, rather than an event
+// line: "Ari — health 8, facing the Bone Dragon."
+func (c *Client) describe(t Task, style Style, cons Constraints) string {
+	subject, rest := splitSubject(withKinds(fieldsOf(t)), t.Event)
+	rest = salient(rest, maxFields(style, cons))
+
+	// Describe is a snapshot: lead with the subject, no opener.
+	line := capitalise(subject)
+	if p := realizeAll(rest); len(p) > 0 {
+		line += " — " + strings.Join(p, ", ")
+	}
+	return applyBudget(line+".", cons)
+}
+
+// fieldsOf returns the task's structured fields (Fields wins over Data).
+func fieldsOf(t Task) []Field {
+	if t.Fields != nil {
+		return t.Fields
+	}
+	return flattenData(t.Data)
+}
+
+// realizeAll realises each field to a fragment.
+func realizeAll(fields []Field) []string {
+	ps := make([]string, 0, len(fields))
+	for _, f := range fields {
+		ps = append(ps, realize(f))
+	}
+	return ps
+}
+
+// splitSubject picks a subject phrase — preferring a field whose key matches the
+// event, then the first name field — and returns the remaining fields.
+func splitSubject(fields []Field, event string) (string, []Field) {
+	pick := -1
+	if event != "" {
+		for i, f := range fields {
+			if strings.EqualFold(f.Key, event) {
+				pick = i
+				break
+			}
+		}
+	}
+	if pick < 0 {
+		for i, f := range fields {
+			if f.Kind == KindName {
+				pick = i
+				break
+			}
+		}
+	}
+	if pick >= 0 {
+		f := fields[pick]
+		rest := make([]Field, 0, len(fields)-1)
+		rest = append(rest, fields[:pick]...)
+		rest = append(rest, fields[pick+1:]...)
+		return valueString(f.Value), rest
+	}
+	if event != "" {
+		return humanizeEvent(event), fields
+	}
+	return "It", fields
 }
 
 func (c *Client) viaFallback(ctx context.Context, t Task) (Result, error) {

@@ -71,18 +71,37 @@ var openersByTone = map[string][]string{
 	"aggressive":   {"", "Boom — ", "There it is — "},
 }
 
-func openersFor(tone string) []string {
-	if o, ok := openersByTone[tone]; ok {
-		return o
+// openersFor returns the opener pool for a style. When humour is off, colourful
+// openers are dropped so the voice stays plain.
+func openersFor(style Style, tone string) []string {
+	pool, ok := openersByTone[tone]
+	if !ok {
+		pool = openersByTone["neutral"]
 	}
-	return openersByTone["neutral"]
+	if style.Humour == "" || style.Humour == "none" {
+		plain := pool[:0:0]
+		for _, o := range pool {
+			if !wittyOpeners[o] {
+				plain = append(plain, o)
+			}
+		}
+		if len(plain) > 0 {
+			return plain
+		}
+	}
+	return pool
+}
+
+// wittyOpeners are colourful openers suppressed when humour is off.
+var wittyOpeners = map[string]bool{
+	"Delightful — ": true, "Fancy that — ": true, "Well now, ": true,
+	"Of course, ": true, "Naturally, ": true, "Boom — ": true, "There it is — ": true,
 }
 
 // compose builds a single line: opener + event clause + data clause, flavoured by
-// tone and bounded by cons. When markdown is disallowed nothing markdown-y is
-// emitted anyway; cons enforces the word/sentence budget.
-func compose(tone, eventPhrase string, phrases []string, r *rng, cons Constraints) string {
-	opener := r.pick(openersFor(tone))
+// the style and bounded by cons.
+func compose(style Style, eventPhrase string, phrases []string, r *rng, cons Constraints) string {
+	opener := r.pick(openersFor(style, style.Tone))
 
 	var dc string
 	if len(phrases) > 0 {
@@ -97,7 +116,11 @@ func compose(tone, eventPhrase string, phrases []string, r *rng, cons Constraint
 		}
 	}
 
-	line := capitalise(opener + eventPhrase + dc + ".")
+	return applyBudget(capitalise(opener+eventPhrase+dc+"."), cons)
+}
+
+// applyBudget trims a line to the sentence/word constraints.
+func applyBudget(line string, cons Constraints) string {
 	if cons.MaxSentences > 0 {
 		line = limitSentences(line, cons.MaxSentences)
 	}

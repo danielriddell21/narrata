@@ -97,6 +97,37 @@ func TestPersonasJSON(t *testing.T) {
 	}
 }
 
+func TestDescribeLeadsWithSubject(t *testing.T) {
+	c := mustClient(t)
+	res, err := c.Generate(context.Background(), Task{
+		Intent: Describe,
+		Event:  "player",
+		Data:   map[string]any{"player": "Ari", "health": 8, "enemy": "Bone Dragon"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasPrefix(res.Text, "Ari") {
+		t.Fatalf("describe should lead with the subject: %q", res.Text)
+	}
+}
+
+func TestHumourGatingSuppressesColourfulOpeners(t *testing.T) {
+	c := mustClient(t)
+	for i := 0; i < 200; i++ {
+		res, _ := c.Generate(context.Background(), Task{
+			Event: "x", Data: map[string]any{"a": 1},
+			Style: &Style{Tone: "witty", Humour: "none"}, Seed: uint64(i + 1),
+		})
+		for opener := range wittyOpeners {
+			if strings.HasPrefix(res.Text, strings.TrimRight(opener, " —, ")) &&
+				opener != "" {
+				t.Fatalf("colourful opener %q leaked with humour=none: %q", opener, res.Text)
+			}
+		}
+	}
+}
+
 func TestOpenEndedNeedsModel(t *testing.T) {
 	c := mustClient(t)
 	if _, err := c.Generate(context.Background(), Task{Intent: Summarize, Event: "x"}); !errors.Is(err, ErrNeedsModel) {
