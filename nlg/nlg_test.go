@@ -170,8 +170,54 @@ func TestBudgetDropsWholeDetails(t *testing.T) {
 
 func TestOpenEndedNeedsModel(t *testing.T) {
 	c := mustClient(t)
-	if _, err := c.Generate(context.Background(), Task{Intent: Summarize, Event: "x"}); !errors.Is(err, ErrNeedsModel) {
+	// An unknown/open-ended intent with no fallback needs a model.
+	if _, err := c.Generate(context.Background(), Task{Intent: Intent("reason"), Event: "x"}); !errors.Is(err, ErrNeedsModel) {
 		t.Fatalf("err = %v, want ErrNeedsModel", err)
+	}
+}
+
+func TestSummarize(t *testing.T) {
+	c := mustClient(t)
+	res, err := c.Generate(context.Background(), Task{
+		Intent: Summarize,
+		Event:  "incident",
+		Data:   map[string]any{"service": "payments", "cpu": 96, "latency_ms": 950},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.Text == "" || !strings.HasPrefix(res.Text, "Incident") {
+		t.Fatalf("unexpected summary: %q", res.Text)
+	}
+}
+
+func TestClassify(t *testing.T) {
+	c := mustClient(t)
+	res, err := c.Generate(context.Background(), Task{
+		Intent: Classify,
+		Event:  "disk_full",
+		Labels: []string{"ok", "warning", "full"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.Label != "full" {
+		t.Fatalf("Label = %q, want full", res.Label)
+	}
+}
+
+func TestExtract(t *testing.T) {
+	c := mustClient(t)
+	res, err := c.Generate(context.Background(), Task{
+		Intent: Extract,
+		Data:   map[string]any{"service": "payments", "cpu": 96, "region": "eu"},
+		Labels: []string{"service", "cpu"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.Text != "service=payments, cpu=96" {
+		t.Fatalf("Extract = %q", res.Text)
 	}
 }
 
@@ -181,7 +227,7 @@ func (s stubBackend) Generate(_ context.Context, _ string) (string, error) { ret
 
 func TestFallbackRoutes(t *testing.T) {
 	c := mustClient(t, WithFallback(stubBackend{out: "from model"}))
-	res, err := c.Generate(context.Background(), Task{Intent: Classify, Event: "x", Hint: "classify this"})
+	res, err := c.Generate(context.Background(), Task{Intent: Intent("chat"), Hint: "hello"})
 	if err != nil {
 		t.Fatal(err)
 	}

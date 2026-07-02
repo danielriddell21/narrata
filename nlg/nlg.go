@@ -171,6 +171,12 @@ func (c *Client) Generate(ctx context.Context, t Task) (Result, error) {
 		return Result{Text: c.narrate(t, style, cons)}, nil
 	case Describe:
 		return Result{Text: c.describe(t, style, cons)}, nil
+	case Summarize:
+		return Result{Text: c.summarize(t, style, cons)}, nil
+	case Classify:
+		return c.classify(ctx, t)
+	case Extract:
+		return Result{Text: c.extract(t)}, nil
 	default:
 		return c.viaFallback(ctx, t)
 	}
@@ -224,6 +230,94 @@ func (c *Client) describe(t Task, style Style, cons Constraints) string {
 		line += " — " + strings.Join(p, ", ")
 	}
 	return applyBudget(line+".", cons)
+}
+
+// summarize condenses several salient fields into one line, optionally led by
+// the event.
+func (c *Client) summarize(t Task, style Style, cons Constraints) string {
+	fields := salient(withKinds(fieldsOf(t)), summaryMax(style))
+	phrases := realizeAll(fields)
+
+	lead := ""
+	if t.Event != "" {
+		lead = humanizeEvent(t.Event)
+	}
+	kept := fitPhrases(lead, phrases, cons)
+
+	var line string
+	switch {
+	case lead != "" && len(kept) > 0:
+		line = lead + " — " + strings.Join(kept, ", ")
+	case len(kept) > 0:
+		line = strings.Join(kept, ", ")
+	default:
+		line = lead
+	}
+	return applyBudget(capitalise(line)+".", cons)
+}
+
+func summaryMax(style Style) int {
+	switch style.Verbosity {
+	case "short":
+		return 2
+	case "brief":
+		return 3
+	default:
+		return 4
+	}
+}
+
+// classify maps the task to one of Labels by keyword overlap. It is a
+// deterministic keyword classifier, not a semantic one: a label wins when its
+// words appear in the event/data/hint. With no Labels it defers to the fallback.
+func (c *Client) classify(ctx context.Context, t Task) (Result, error) {
+	if len(t.Labels) == 0 {
+		return c.viaFallback(ctx, t)
+	}
+	var hay strings.Builder
+	hay.WriteString(strings.ToLower(t.Event + " " + t.Hint))
+	for _, f := range flattenData(t.Data) {
+		hay.WriteString(" ")
+		hay.WriteString(strings.ToLower(f.Key + " " + valueString(f.Value)))
+	}
+	text := hay.String()
+
+	best, bestScore := t.Labels[0], -1
+	for _, lbl := range t.Labels {
+		s := 0
+		for _, w := range strings.Fields(strings.ToLower(lbl)) {
+			if strings.Contains(text, w) {
+				s++
+			}
+		}
+		if s > bestScore {
+			best, bestScore = lbl, s
+		}
+	}
+	return Result{Label: best, Text: best}, nil
+}
+
+// extract pulls the requested Labels (keys) from the data as "key=value" pairs;
+// with no Labels it returns all fields.
+func (c *Client) extract(t Task) string {
+	fields := withKinds(fieldsOf(t))
+	keys := t.Labels
+	var parts []string
+	if len(keys) == 0 {
+		for _, f := range fields {
+			parts = append(parts, f.Key+"="+valueString(f.Value))
+		}
+		return strings.Join(parts, ", ")
+	}
+	for _, key := range keys {
+		for _, f := range fields {
+			if strings.EqualFold(f.Key, key) || strings.EqualFold(humanizeKey(f.Key), key) {
+				parts = append(parts, key+"="+valueString(f.Value))
+				break
+			}
+		}
+	}
+	return strings.Join(parts, ", ")
 }
 
 // fieldsOf returns the task's structured fields (Fields wins over Data).
