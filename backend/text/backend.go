@@ -65,6 +65,8 @@ func New(o Options) (Backend, error) {
 		return NewMock(), nil
 	case "template":
 		return NewTemplate(), nil
+	case "native", "grammar":
+		return NewNative(), nil
 	case "llama.cpp", "llama":
 		return newLlama(o)
 	default:
