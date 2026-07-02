@@ -35,6 +35,10 @@ sports_commentator  Get this — Enemy killed (combo: 3, enemy: Cacodemon).
 
 It's a clear step up from `template` (tone-aware, varied) while staying pure Go.
 
+> **Chosen direction:** zero-weights procedural generation (grammar + runtime
+> statistics + constrained decoding), evolving `native` into a standalone
+> pure-Go library. Full design: [design-native-nlg.md](./design-native-nlg.md).
+
 ## Roadmap (increasing quality, all pure Go)
 
 1. **Grammar++ (current).** Richer per-tone phrase pools, verb/subject slots
