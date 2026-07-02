@@ -151,6 +151,23 @@ func TestShapedSentences(t *testing.T) {
 	}
 }
 
+func TestBudgetDropsWholeDetails(t *testing.T) {
+	c := mustClient(t)
+	res, _ := c.Generate(context.Background(), Task{
+		Event:       "service_degraded",
+		Data:        map[string]any{"service": "payments-api", "cpu": 96, "latency_ms": 950, "region": "eu"},
+		Constraints: Constraints{MaxWords: 6},
+	})
+	if n := len(strings.Fields(res.Text)); n > 6 {
+		t.Fatalf("over budget: %d words in %q", n, res.Text)
+	}
+	// No dangling separators from mid-phrase truncation.
+	if strings.Contains(res.Text, ",.") || strings.HasSuffix(res.Text, "—.") ||
+		strings.Contains(res.Text, "— .") {
+		t.Fatalf("dangling separator in %q", res.Text)
+	}
+}
+
 func TestOpenEndedNeedsModel(t *testing.T) {
 	c := mustClient(t)
 	if _, err := c.Generate(context.Background(), Task{Intent: Summarize, Event: "x"}); !errors.Is(err, ErrNeedsModel) {

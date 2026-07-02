@@ -102,6 +102,7 @@ var wittyOpeners = map[string]bool{
 // the style and bounded by cons.
 func compose(style Style, eventPhrase string, phrases []string, r *rng, cons Constraints) string {
 	opener := r.pick(openersFor(style, style.Tone))
+	phrases = fitPhrases(opener+eventPhrase, phrases, cons)
 
 	var dc string
 	if len(phrases) > 0 {
@@ -117,6 +118,26 @@ func compose(style Style, eventPhrase string, phrases []string, r *rng, cons Con
 	}
 
 	return applyBudget(capitalise(opener+eventPhrase+dc+"."), cons)
+}
+
+// fitPhrases keeps only the leading detail phrases that fit within the word
+// budget (counting a separator each), so details are dropped whole rather than
+// truncated mid-phrase. With no budget it keeps them all.
+func fitPhrases(base string, phrases []string, cons Constraints) []string {
+	if cons.MaxWords <= 0 {
+		return phrases
+	}
+	used := len(strings.Fields(base))
+	kept := phrases[:0:0]
+	for _, p := range phrases {
+		cost := len(strings.Fields(p)) + 1 // + separator
+		if used+cost > cons.MaxWords {
+			break
+		}
+		used += cost
+		kept = append(kept, p)
+	}
+	return kept
 }
 
 // applyBudget trims a line to the sentence/word constraints.

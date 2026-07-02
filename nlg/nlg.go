@@ -206,7 +206,7 @@ func (c *Client) narrate(t Task, style Style, cons Constraints) string {
 	rest = salient(rest, maxFields(style, cons))
 
 	clause := capitalise(clauseFor(sh, action, subject, r))
-	if p := realizeAll(rest); len(p) > 0 {
+	if p := fitPhrases(clause, realizeAll(rest), cons); len(p) > 0 {
 		clause += " — " + strings.Join(p, ", ")
 	}
 	return applyBudget(clause+".", cons)
@@ -220,7 +220,7 @@ func (c *Client) describe(t Task, style Style, cons Constraints) string {
 
 	// Describe is a snapshot: lead with the subject, no opener.
 	line := capitalise(subject)
-	if p := realizeAll(rest); len(p) > 0 {
+	if p := fitPhrases(line, realizeAll(rest), cons); len(p) > 0 {
 		line += " — " + strings.Join(p, ", ")
 	}
 	return applyBudget(line+".", cons)

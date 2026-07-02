@@ -3,6 +3,7 @@ package text
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/danielriddell21/narrata/internal/prompt"
@@ -32,10 +33,11 @@ func (n *Native) Generate(ctx context.Context, p string, _ GenerateOptions) (Res
 	style := parseStyle(p)
 
 	res, err := n.client.Generate(ctx, nlg.Task{
-		Intent: nlg.Narrate,
-		Event:  event,
-		Fields: fieldsFromLines(dataLines),
-		Style:  &style,
+		Intent:      nlg.Narrate,
+		Event:       event,
+		Fields:      fieldsFromLines(dataLines),
+		Style:       &style,
+		Constraints: parseConstraints(p),
 	})
 	if err != nil {
 		return Result{}, fmt.Errorf("native backend: %w", err)
@@ -55,6 +57,21 @@ func parseStyle(p string) nlg.Style {
 		Humour:    styleField(p, "humour"),
 		Verbosity: styleField(p, "verbosity"),
 	}
+}
+
+// parseConstraints reads the prompt's "Constraints: max_words=..,
+// max_sentences=.." line so nlg can trim cleanly (whole details) rather than
+// leaving the engine's post-processing to cut mid-phrase.
+func parseConstraints(p string) nlg.Constraints {
+	return nlg.Constraints{
+		MaxWords:     styleFieldInt(p, "max_words"),
+		MaxSentences: styleFieldInt(p, "max_sentences"),
+	}
+}
+
+func styleFieldInt(p, key string) int {
+	n, _ := strconv.Atoi(styleField(p, key))
+	return n
 }
 
 func styleField(p, key string) string {
