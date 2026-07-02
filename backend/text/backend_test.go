@@ -41,6 +41,12 @@ func TestLlamaStubUnavailableByDefault(t *testing.T) {
 	}
 }
 
+func TestBornStubUnavailableByDefault(t *testing.T) {
+	if _, err := New(Options{Backend: "born"}); err == nil {
+		t.Fatal("expected born backend to be unavailable without -tags born")
+	}
+}
+
 func TestMockDeterministic(t *testing.T) {
 	m := NewMock()
 	p := buildPrompt()

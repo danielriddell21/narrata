@@ -43,15 +43,64 @@ It's a clear step up from `template` (tone-aware, varied) while staying pure Go.
 2. **Phrase corpus + Markov.** Ship a small embedded phrase corpus per tone
    (`//go:embed`) and stitch with a low-order Markov/template hybrid for more
    natural variation. Still tiny (KB), deterministic-seedable.
-3. **Optional tiny embedded model.** For hosts wanting more, embed a small
-   quantised model's weights via `//go:embed` and run a pure-Go forward pass.
-   Feasible but perf-bound (no BLAS/SIMD today; Go 1.26's experimental `simd`
-   package will help). Best kept opt-in behind its own backend name.
+3. **Optional real model, pure Go (via Born or an in-house subset).** For hosts
+   wanting genuine LLM output with **no cgo and a single binary**, run a small
+   quantised GGUF through a pure-Go transformer. See the Born evaluation below.
+   Perf-bound today (no BLAS; Go 1.26's experimental `simd` helps). Kept opt-in
+   behind its own backend name so the default stays zero-dependency.
 
 Guiding rule: **Narrata bundles no model.** Pure-Go backends (grammar/corpus)
 are the zero-asset default; if a host wants a model, it embeds the bytes in its
 *own* binary via a `[]byte`/`fs.FS` model source (a small additive API on
 `TextConfig`) and stays self-contained. Keeps Narrata light and license-clean.
+
+## Evaluated: [born-ml/born](https://github.com/born-ml/born)
+
+Born is a **pure-Go, zero-CGO** deep-learning/inference framework — the same
+"models are born production-ready, single binary, no Python/cgo" ethos we want.
+It already implements the hard parts we'd otherwise build:
+
+- GGUF loading with K-quant dequant (Q4_K/Q5_K/Q6_K/Q8_0, F16/F32),
+- transformer inference: RMSNorm, RoPE/ALiBi, SwiGLU, GQA, KV-cache, Flash-
+  Attention-2, speculative decoding,
+- sampling: temperature / top-k / top-p / min-p / repetition penalty, streaming.
+
+Usage is a clean fit for our `text.Backend`:
+
+```go
+be := cpu.New()
+model, _ := llama.LoadGGUF("tinyllama-1.1b.Q8_0.gguf", be) // defer model.Release()
+gen := generate.NewTextGenerator(model, tok, generate.SamplingConfig{Temperature: 0.7, TopP: 0.9, TopK: 40})
+out, _ := gen.Generate(prompt, generate.GenerateConfig{MaxTokens: 100})
+```
+
+**The catch — it's pure Go but not lean.** `go.mod` (module
+`github.com/born-ml/born`, Go 1.26) pulls a heavy tree even for CPU use: the
+`gogpu/wgpu` + `gogpu/naga` + `go-webgpu/*` WebGPU stack, `tiktoken-go` +
+`dlclark/regexp2`, `google/uuid`, `golang.org/x/sys`, `yaml.v3`. So it satisfies
+"no cgo / single binary" but not "few dependencies."
+
+### Recommended stance
+
+- **Ideas to borrow directly** if we ever build a lean in-house path: their
+  primitive list above (GGUF K-quant dequant, RMSNorm/RoPE/SwiGLU, KV-cache,
+  the sampler set). That's the exact shopping list for a minimal pure-Go engine.
+- **Integration**: add a `born` backend **behind a `born` build tag** plus an
+  optional module require — same gating pattern as the cgo backends, but pure
+  Go, so it's strictly better than the `llama.cpp` cgo path (no native lib, no
+  compiler). The default build stays zero-dependency; hosts that want real
+  local inference opt in with `-tags born` and accept Born's dependency weight.
+- **Deprecate `llama.cpp`** once `born` is proven: a pure-Go, single-binary
+  backend removes the cgo/native-lib burden entirely.
+
+This gives a clean spectrum: `native` (zero-dep default) → `born` (opt-in, pure
+Go, real model, single binary) → `llama.cpp` (legacy cgo, max hardware perf).
+
+A tag-gated seam is scaffolded in `backend/text/born.go` (real, behind
+`-tags born`) and `backend/text/born_stub.go` (default). The real file is a
+**spike** — verify its calls against Born's current API and pick the correct
+tokenizer for the model (the quickstart's tiktoken/gpt-4 is not right for a
+LLaMA GGUF) before relying on it.
 
 ## TTS parity (later, same principle)
 
