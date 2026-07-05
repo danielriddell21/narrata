@@ -84,27 +84,21 @@ out, _ := gen.Generate(prompt, generate.GenerateConfig{MaxTokens: 100})
 `dlclark/regexp2`, `google/uuid`, `golang.org/x/sys`, `yaml.v3`. So it satisfies
 "no cgo / single binary" but not "few dependencies."
 
-### Recommended stance
+### Outcome
 
-- **Ideas to borrow directly** if we ever build a lean in-house path: their
-  primitive list above (GGUF K-quant dequant, RMSNorm/RoPE/SwiGLU, KV-cache,
-  the sampler set). That's the exact shopping list for a minimal pure-Go engine.
-- **Integration**: add a `born` backend **behind a `born` build tag** plus an
-  optional module require — same gating pattern as the cgo backends, but pure
-  Go, so it's strictly better than the `llama.cpp` cgo path (no native lib, no
-  compiler). The default build stays zero-dependency; hosts that want real
-  local inference opt in with `-tags born` and accept Born's dependency weight.
-- **Deprecate `llama.cpp`** once `born` is proven: a pure-Go, single-binary
-  backend removes the cgo/native-lib burden entirely.
+We **did not** integrate Born as a backend — its dependency weight is at odds
+with Narrata's "few dependencies" goal, and the direction we chose ([the `nlg`
+library](./design-native-nlg.md)) needs no model at all. A `born` backend seam
+was prototyped and then removed.
 
-This gives a clean spectrum: `native` (zero-dep default) → `born` (opt-in, pure
-Go, real model, single binary) → `llama.cpp` (legacy cgo, max hardware perf).
+Born stays a **reference** for the day we want a lean, in-house pure-Go *model*
+path: borrow its primitive list above (GGUF K-quant dequant, RMSNorm/RoPE/SwiGLU,
+KV-cache, the sampler set) rather than the framework. Until then, hosts that need
+a real model can plug one in via `nlg`'s `WithFallback` or the existing
+build-tagged `llama.cpp` backend.
 
-A tag-gated seam is scaffolded in `backend/text/born.go` (real, behind
-`-tags born`) and `backend/text/born_stub.go` (default). The real file is a
-**spike** — verify its calls against Born's current API and pick the correct
-tokenizer for the model (the quickstart's tiktoken/gpt-4 is not right for a
-LLaMA GGUF) before relying on it.
+The spectrum today: `native`/`nlg` (zero-dep default) → `WithFallback` / a future
+lean pure-Go model → `llama.cpp` (legacy cgo, max hardware perf).
 
 ## TTS parity (later, same principle)
 

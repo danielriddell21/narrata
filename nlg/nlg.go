@@ -83,7 +83,7 @@ type Result struct {
 }
 
 // Backend is the escape hatch for tasks that need a real language model.
-// Narrata's llama.cpp / born text backends satisfy this shape.
+// A real-model text backend (e.g. Narrata's llama.cpp backend) satisfies it.
 type Backend interface {
 	Generate(ctx context.Context, prompt string) (string, error)
 }

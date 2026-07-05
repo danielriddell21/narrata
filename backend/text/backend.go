@@ -67,8 +67,6 @@ func New(o Options) (Backend, error) {
 		return NewTemplate(), nil
 	case "native", "grammar":
 		return NewNative(), nil
-	case "born":
-		return newBorn(o)
 	case "llama.cpp", "llama":
 		return newLlama(o)
 	default:

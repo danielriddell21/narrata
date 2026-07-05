@@ -99,7 +99,7 @@ func WithPersonasJSON(data []byte) Option
 func WithFallback(b Backend) Option // for open-ended intents / unknown input
 
 // Backend is the escape hatch: a real LLM for the tasks procedural logic can't do.
-// Narrata's llama.cpp / born backends satisfy this.
+// A real-model text backend (e.g. Narrata's llama.cpp backend) satisfies this.
 type Backend interface {
     Generate(ctx context.Context, prompt string) (string, error)
 }
