@@ -19,6 +19,7 @@ flowchart LR
 |------|------------|-----------|-------|
 | Text | `mock`     | —         | Deterministic; the default when no backend is set. Ideal for tests. |
 | Text | `template` | —         | Pure-Go sentence composer; real local text with no model file. |
+| Text | `native` (alias `grammar`) | — | Pure-Go, persona-aware generator (event-shape sentences, tone-conditioned) built on the [`nlg`](../nlg) library. Zero deps, no model. |
 | Text | `llama.cpp`| `llama`   | Experimental cgo binding to llama.cpp/GGUF. |
 | TTS  | `mock`     | —         | Emits a valid 16-bit PCM WAV derived from the text. |
 | TTS  | `kokoro`   | `kokoro`  | Experimental cgo binding to ONNX Runtime for Kokoro. |

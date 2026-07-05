@@ -164,7 +164,7 @@ func generateCmd() *cobra.Command {
 	f.StringVar(&dataJSON, "data", "", "event data as a JSON object")
 	f.StringVar(&personasPath, "personas", "", "path to a personas.json file")
 	f.StringVar(&personasDir, "dir", "", "path to a personas/ directory")
-	f.StringVar(&backend, "backend", "template", "text backend: mock or template")
+	f.StringVar(&backend, "backend", "native", "text backend: mock, template, or native")
 	f.IntVar(&maxWords, "max-words", 0, "override the persona word limit")
 	f.StringVar(&instruction, "instruction", "", "optional one-off steering note")
 	return cmd
