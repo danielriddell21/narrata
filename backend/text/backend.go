@@ -43,9 +43,9 @@ type Result struct {
 // Options configures backend construction. It is populated by the engine from
 // the host's text configuration.
 type Options struct {
-	// Backend names the implementation: "mock", "template", or "llama.cpp".
+	// Backend names the implementation: "mock", "template", or "native".
 	Backend string
-	// ModelPath is the path to a model file (used by "llama.cpp").
+	// ModelPath is the path to a model file, for any model-backed backend.
 	ModelPath string
 	// ContextTokens is the model context window. Zero uses the backend default.
 	ContextTokens int
@@ -67,8 +67,6 @@ func New(o Options) (Backend, error) {
 		return NewTemplate(), nil
 	case "native", "grammar":
 		return NewNative(), nil
-	case "llama.cpp", "llama":
-		return newLlama(o)
 	default:
 		return nil, fmt.Errorf("text: unknown backend %q", o.Backend)
 	}

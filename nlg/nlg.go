@@ -82,8 +82,8 @@ type Result struct {
 	Label string // set for Classify
 }
 
-// Backend is the escape hatch for tasks that need a real language model.
-// A real-model text backend (e.g. Narrata's llama.cpp backend) satisfies it.
+// Backend is the escape hatch for tasks that need a real language model. Any
+// type with a Generate(ctx, prompt) (string, error) method satisfies it.
 type Backend interface {
 	Generate(ctx context.Context, prompt string) (string, error)
 }

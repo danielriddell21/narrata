@@ -1,7 +1,6 @@
 // Command home_automation demonstrates Narrata producing a spoken announcement
 // for a smart-home event. It enables the mock TTS backend so the speech path
-// runs with no model file; switch Backend to "kokoro" (built with -tags
-// kokoro) for real local synthesis.
+// runs with no model file.
 package main
 
 import (
@@ -17,7 +16,7 @@ func main() {
 	ctx := context.Background()
 
 	engine, err := narrata.New(narrata.Config{
-		Text: narrata.TextConfig{Backend: "template"},
+		Text: narrata.TextConfig{Backend: "native"},
 		TTS: narrata.TTSConfig{
 			Enabled:      true,
 			Backend:      "mock",

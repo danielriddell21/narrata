@@ -42,7 +42,7 @@ type Result struct {
 // Options configures backend construction. It is populated by the engine from
 // the host's TTS configuration.
 type Options struct {
-	// Backend names the implementation: "mock" or "kokoro".
+	// Backend names the implementation: "mock".
 	Backend string
 	// ModelPath is the path to the TTS model file.
 	ModelPath string
@@ -58,8 +58,6 @@ func New(o Options) (Backend, error) {
 	switch o.Backend {
 	case "", "mock":
 		return NewMock(o.SampleRate), nil
-	case "kokoro":
-		return newKokoro(o)
 	default:
 		return nil, fmt.Errorf("tts: unknown backend %q", o.Backend)
 	}

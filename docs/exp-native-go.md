@@ -94,21 +94,14 @@ was prototyped and then removed.
 Born stays a **reference** for the day we want a lean, in-house pure-Go *model*
 path: borrow its primitive list above (GGUF K-quant dequant, RMSNorm/RoPE/SwiGLU,
 KV-cache, the sampler set) rather than the framework. Until then, hosts that need
-a real model can plug one in via `nlg`'s `WithFallback` or the existing
-build-tagged `llama.cpp` backend.
+a real model can plug one in via `nlg`'s `WithFallback`.
 
-The spectrum today: `native`/`nlg` (zero-dep default) → `WithFallback` / a future
-lean pure-Go model → `llama.cpp` (legacy cgo, max hardware perf).
+The cgo backends (`llama.cpp`, `kokoro`) have been **removed** on this branch —
+the runtime is now pure Go end to end. Hosts that need a real model plug one in
+via `nlg.WithFallback`.
 
 ## TTS parity (later, same principle)
 
 - Pure-Go **formant synth** (retro/robotic — fits sci-fi/game aesthetics), or
 - host-embedded phrase-bank audio for a fixed callout set.
-- Neural (Kokoro/ONNX) stays the opt-in high-quality path, not a dependency.
-
-## Relationship to `llama.cpp` / `kokoro`
-
-Those cgo backends stay build-tagged and available for hosts that want maximum
-quality and can accept the native-lib build. The intent of this branch is to
-make the **pure-Go path the recommended default**, and eventually let a
-self-contained binary be the out-of-the-box experience.
+- The `mock` TTS backend remains for the optional speech path.

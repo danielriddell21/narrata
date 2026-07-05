@@ -29,9 +29,9 @@ type Config struct {
 // TextConfig selects and tunes the text backend.
 type TextConfig struct {
 	// Backend names the implementation: "mock" (default), "template", or
-	// "llama.cpp". The llama.cpp backend requires the "llama" build tag.
+	// "native" (persona-aware pure-Go generation).
 	Backend string
-	// ModelPath is the path to a GGUF model file (used by "llama.cpp").
+	// ModelPath is the path to a model file, for any model-backed backend.
 	ModelPath string
 	// ContextTokens is the model context window. Zero uses the backend default.
 	ContextTokens int
@@ -48,10 +48,9 @@ type TTSConfig struct {
 	// Enabled turns speech synthesis on. When false, requests that ask for
 	// speech fail with ErrTTSUnavailable and text-only requests are unaffected.
 	Enabled bool
-	// Backend names the implementation: "mock" or "kokoro". The kokoro backend
-	// requires the "kokoro" build tag.
+	// Backend names the implementation: "mock".
 	Backend string
-	// ModelPath is the path to the TTS model (e.g. a Kokoro ONNX file).
+	// ModelPath is the path to a TTS model file, for any model-backed backend.
 	ModelPath string
 	// DefaultVoice is used when a persona declares no voice.
 	DefaultVoice string
