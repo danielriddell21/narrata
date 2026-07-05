@@ -24,7 +24,7 @@ func Example() {
 
 	fmt.Println(res.Text)
 	// Output:
-	// Payments-api is struggling — cpu 96, latency ms 950.
+	// Payments-api is struggling — cpu 96%, latency 950ms.
 }
 
 // ExampleClient_Generate_classify shows the keyword classifier picking a label.

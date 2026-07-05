@@ -162,10 +162,91 @@ func realize(f Field) string {
 		}
 		return humanizeKey(f.Key)
 	case KindQuantity:
-		return humanizeKey(f.Key) + " " + valueString(f.Value)
+		return realizeQuantity(f)
 	default:
 		return humanizeKey(f.Key) + " " + valueString(f.Value)
 	}
+}
+
+// realizeQuantity formats a numeric field with a unit inferred from the key
+// ("latency_ms" -> "latency 950ms") or an implied percent ("cpu" 96 -> "cpu 96%").
+func realizeQuantity(f Field) string {
+	base, unit := unitFor(f.Key)
+	v := formatNumber(f.Value)
+	if unit != "" {
+		return humanizeKey(base) + " " + v + unit
+	}
+	if impliedPercent(f.Key, f.Value) {
+		return humanizeKey(f.Key) + " " + v + "%"
+	}
+	return humanizeKey(f.Key) + " " + v
+}
+
+// unitSuffixes maps a key suffix to the unit that replaces it.
+var unitSuffixes = []struct{ suf, unit string }{
+	{"_ms", "ms"}, {"_msec", "ms"},
+	{"_seconds", "s"}, {"_secs", "s"}, {"_sec", "s"},
+	{"_kb", "KB"}, {"_mb", "MB"}, {"_gb", "GB"}, {"_tb", "TB"},
+	{"_hz", "Hz"}, {"_khz", "kHz"}, {"_mhz", "MHz"},
+	{"_bps", "bps"}, {"_percent", "%"}, {"_pct", "%"},
+}
+
+func unitFor(key string) (base, unit string) {
+	lk := strings.ToLower(key)
+	for _, u := range unitSuffixes {
+		if strings.HasSuffix(lk, u.suf) && len(key) > len(u.suf) {
+			return key[:len(key)-len(u.suf)], u.unit
+		}
+	}
+	return key, ""
+}
+
+// impliedPercent reports keys that read as a percentage in the 0–100 range.
+func impliedPercent(key string, v any) bool {
+	lk := strings.ToLower(key)
+	if !containsAny(lk, "cpu", "mem", "disk", "battery", "usage", "util") {
+		return false
+	}
+	f, ok := toFloat(v)
+	return ok && f >= 0 && f <= 100
+}
+
+func toFloat(v any) (float64, bool) {
+	switch t := v.(type) {
+	case float64:
+		return t, true
+	case int:
+		return float64(t), true
+	case int64:
+		return float64(t), true
+	case string:
+		f, err := strconv.ParseFloat(strings.TrimSpace(t), 64)
+		return f, err == nil
+	default:
+		return 0, false
+	}
+}
+
+// formatNumber renders a value, adding thousands separators to large integers.
+func formatNumber(v any) string {
+	s := valueString(v)
+	f, ok := toFloat(v)
+	if !ok || f != float64(int64(f)) || f < 10000 && f > -10000 {
+		return s
+	}
+	neg := strings.HasPrefix(s, "-")
+	digits := strings.TrimPrefix(s, "-")
+	var out []byte
+	for i, c := range []byte(digits) {
+		if i > 0 && (len(digits)-i)%3 == 0 {
+			out = append(out, ',')
+		}
+		out = append(out, c)
+	}
+	if neg {
+		return "-" + string(out)
+	}
+	return string(out)
 }
 
 func valueString(v any) string {
