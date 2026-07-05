@@ -128,6 +128,28 @@ func TestHumourGatingSuppressesColourfulOpeners(t *testing.T) {
 	}
 }
 
+func TestToneBucketsVaryClause(t *testing.T) {
+	c := mustClient(t)
+	base := Task{Event: "reactor_critical", Data: map[string]any{"reactor": "core-1"}, Seed: 7}
+	plain, drama, wry := base, base, base
+	plain.Style = &Style{Tone: "calm"}
+	drama.Style = &Style{Tone: "dramatic"}
+	wry.Style = &Style{Tone: "dry"}
+
+	rp, _ := c.Generate(context.Background(), plain)
+	rd, _ := c.Generate(context.Background(), drama)
+	rw, _ := c.Generate(context.Background(), wry)
+	if rp.Text == rd.Text || rp.Text == rw.Text || rd.Text == rw.Text {
+		t.Fatalf("tone buckets did not vary clause: %q / %q / %q", rp.Text, rd.Text, rw.Text)
+	}
+	if !strings.HasSuffix(rd.Text, "!") {
+		t.Fatalf("dramatic should exclaim: %q", rd.Text)
+	}
+	if strings.HasSuffix(rp.Text, "!") {
+		t.Fatalf("calm should not exclaim: %q", rp.Text)
+	}
+}
+
 func TestSubjectSubstitution(t *testing.T) {
 	c := mustClient(t)
 	// A field matching the event's subject noun becomes the sentence subject.

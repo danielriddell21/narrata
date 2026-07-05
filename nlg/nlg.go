@@ -230,17 +230,17 @@ func (c *Client) narrate(t Task, style Style, cons Constraints) string {
 	sh, noun, action := classifyEvent(t.Event)
 	if sh == shapeGeneric {
 		fields = salient(fields, maxFields(style, cons))
-		return compose(c.openerPool(style), humanizeEvent(t.Event), realizeAll(fields), r, cons)
+		return terminate(compose(c.openerPool(style), humanizeEvent(t.Event), realizeAll(fields), r, cons), style)
 	}
 
 	subject, rest := subjectPhrase(noun, fields)
 	rest = salient(rest, maxFields(style, cons))
 
-	clause := capitalise(clauseFor(sh, action, subject, r))
+	clause := capitalise(clauseFor(sh, action, subject, toneBucket(style.Tone), r))
 	if p := fitPhrases(clause, realizeAll(rest), cons); len(p) > 0 {
 		clause += " — " + strings.Join(p, ", ")
 	}
-	return applyBudget(clause+".", cons)
+	return terminate(applyBudget(clause+".", cons), style)
 }
 
 // describe produces a snapshot of a subject and its state, rather than an event
