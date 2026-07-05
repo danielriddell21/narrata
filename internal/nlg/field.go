@@ -267,6 +267,41 @@ func valueString(v any) string {
 	}
 }
 
+// renderExample fills {placeholder} tokens in a template from the fields
+// (matched by key or humanized key, case-insensitively). It reports whether
+// every placeholder was filled; an unfilled template should be discarded.
+func renderExample(tmpl string, fields []Field) (string, bool) {
+	lookup := make(map[string]string, len(fields)*2)
+	for _, f := range fields {
+		v := valueString(f.Value)
+		lookup[strings.ToLower(f.Key)] = v
+		lookup[strings.ToLower(humanizeKey(f.Key))] = v
+	}
+	var b strings.Builder
+	filled := true
+	for i := 0; i < len(tmpl); {
+		if tmpl[i] != '{' {
+			b.WriteByte(tmpl[i])
+			i++
+			continue
+		}
+		j := strings.IndexByte(tmpl[i:], '}')
+		if j < 0 {
+			b.WriteByte(tmpl[i])
+			i++
+			continue
+		}
+		name := strings.ToLower(strings.TrimSpace(tmpl[i+1 : i+j]))
+		if v, ok := lookup[name]; ok {
+			b.WriteString(v)
+		} else {
+			filled = false
+		}
+		i += j + 1
+	}
+	return strings.TrimSpace(b.String()), filled
+}
+
 func humanizeKey(key string) string {
 	key = strings.ReplaceAll(key, "_", " ")
 	key = strings.ReplaceAll(key, ".", " ")

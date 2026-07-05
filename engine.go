@@ -178,6 +178,7 @@ func (e *Engine) Generate(ctx context.Context, req Request) (Result, error) {
 				Verbosity: persona.Style.Verbosity,
 			},
 			Rules:         persona.Rules,
+			Examples:      personaExamples(persona),
 			MaxWords:      eff.maxWords,
 			MaxSentences:  eff.maxSentences,
 			AllowMarkdown: eff.allowMarkdown,
@@ -238,6 +239,20 @@ func (e *Engine) Generate(ctx context.Context, req Request) (Result, error) {
 
 	res.Duration = time.Since(start)
 	return res, nil
+}
+
+// personaExamples maps a persona's authored examples to event -> template.
+func personaExamples(p Persona) map[string]string {
+	if len(p.Examples) == 0 {
+		return nil
+	}
+	m := make(map[string]string, len(p.Examples))
+	for _, ex := range p.Examples {
+		if ex.Event != "" && ex.Output != "" {
+			m[ex.Event] = ex.Output
+		}
+	}
+	return m
 }
 
 func (e *Engine) voiceFor(p Persona) string {

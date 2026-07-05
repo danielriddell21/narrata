@@ -14,11 +14,14 @@ type Style struct {
 // skip the rendered prompt string and its lossy round-trip (numbers stay
 // numbers, the full style is available, constraints are explicit).
 type StructuredInput struct {
-	Event         string
-	Data          any
-	Instruction   string
-	Style         Style
-	Rules         []string
+	Event       string
+	Data        any
+	Instruction string
+	Style       Style
+	Rules       []string
+	// Examples maps an event name to a persona-authored template (with {field}
+	// placeholders) used verbatim for that event.
+	Examples      map[string]string
 	MaxWords      int
 	MaxSentences  int
 	AllowMarkdown bool

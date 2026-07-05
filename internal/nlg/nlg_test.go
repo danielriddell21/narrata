@@ -7,6 +7,30 @@ import (
 	"testing"
 )
 
+func TestPersonaExampleTemplate(t *testing.T) {
+	c := mustClient(t)
+	res, _ := c.Generate(context.Background(), Task{
+		Event:    "player_died",
+		Data:     map[string]any{"player": "Ari", "enemy": "Bone Dragon"},
+		Examples: map[string]string{"player_died": "{player} has fallen to the {enemy}."},
+	})
+	if res.Text != "Ari has fallen to the Bone Dragon." {
+		t.Fatalf("example template not used: %q", res.Text)
+	}
+}
+
+func TestExampleFallsThroughWhenPlaceholderMissing(t *testing.T) {
+	c := mustClient(t)
+	res, _ := c.Generate(context.Background(), Task{
+		Event:    "boot_done",
+		Data:     map[string]any{"host": "web-1"},
+		Examples: map[string]string{"boot_done": "{missing} is ready"},
+	})
+	if strings.Contains(res.Text, "{missing}") {
+		t.Fatalf("emitted an unfilled placeholder: %q", res.Text)
+	}
+}
+
 func mustClient(t *testing.T, opts ...Option) *Client {
 	t.Helper()
 	c, err := New(opts...)

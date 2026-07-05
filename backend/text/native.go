@@ -57,6 +57,7 @@ func (n *Native) GenerateStructured(ctx context.Context, in StructuredInput, _ G
 		Hint:        in.Instruction,
 		Style:       &nlg.Style{Tone: in.Style.Tone, Energy: in.Style.Energy, Humour: in.Style.Humour, Verbosity: in.Style.Verbosity},
 		Constraints: nlg.Constraints{MaxWords: in.MaxWords, MaxSentences: in.MaxSentences, AllowMarkdown: in.AllowMarkdown},
+		Examples:    in.Examples,
 	})
 	if err != nil {
 		return Result{}, fmt.Errorf("native backend: %w", err)

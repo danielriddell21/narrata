@@ -73,7 +73,12 @@ type Task struct {
 	Hint        string   // optional one-off steer; also the fallback prompt
 	Style       *Style   // optional inline style, overriding Persona lookup
 	Constraints Constraints
-	Seed        uint64 // determinism; 0 derives a seed from the task
+	// Examples maps an event name to a persona-authored template. When the task's
+	// event matches, the template is used (with {field} placeholders filled from
+	// Data) instead of the grammar — the strongest way to give a persona a
+	// specific, hand-written line for a known event.
+	Examples map[string]string
+	Seed     uint64 // determinism; 0 derives a seed from the task
 }
 
 // Result is the generated output.
@@ -220,10 +225,28 @@ func (c *Client) resolve(t Task) (Persona, Style) {
 	return p, p.Style
 }
 
-// narrate builds a line from the task's event and data. Known event shapes
-// (completion, threshold, arrival, departure, change) produce a proper sentence;
-// unclassified events fall back to a tone-flavoured "event (data)" fragment.
+// exampleLine renders a persona-authored example template for the task's event,
+// if one is present and every placeholder can be filled.
+func (c *Client) exampleLine(t Task, style Style, cons Constraints) (string, bool) {
+	tmpl, ok := t.Examples[t.Event]
+	if !ok || tmpl == "" {
+		return "", false
+	}
+	out, filled := renderExample(tmpl, withKinds(fieldsOf(t)))
+	if !filled || out == "" {
+		return "", false
+	}
+	return terminate(applyBudget(capitalise(out), cons), style), true
+}
+
+// narrate builds a line from the task's event and data. A matching persona
+// example wins; otherwise known event shapes (completion, threshold, arrival,
+// departure, change) produce a proper sentence, and unclassified events fall
+// back to a tone-flavoured fragment.
 func (c *Client) narrate(t Task, style Style, cons Constraints) string {
+	if line, ok := c.exampleLine(t, style, cons); ok {
+		return line
+	}
 	r := newRNG(seedFor(t, style))
 	fields := withKinds(fieldsOf(t))
 
@@ -251,6 +274,9 @@ func (c *Client) narrate(t Task, style Style, cons Constraints) string {
 // describe produces a snapshot of a subject and its state, rather than an event
 // line: "Ari — health 8, facing the Bone Dragon."
 func (c *Client) describe(t Task, style Style, cons Constraints) string {
+	if line, ok := c.exampleLine(t, style, cons); ok {
+		return line
+	}
 	subject, rest := splitSubject(withKinds(fieldsOf(t)), t.Event)
 	rest = salient(rest, maxFields(style, cons))
 
