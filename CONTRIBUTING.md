@@ -15,8 +15,6 @@ just test          # run unit tests
 just test-race     # run tests with the race detector
 just examples      # run the bundled examples
 just tidy          # go mod tidy
-just build-llama   # build with the llama.cpp text backend
-just build-kokoro  # build with the kokoro TTS backend
 just lint          # golangci-lint
 just fmt           # golangci-lint fmt (gofumpt + goimports)
 just ci            # lint + test + build

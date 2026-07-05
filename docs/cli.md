@@ -44,7 +44,7 @@ model file required).
 | `--data` | Event data as a JSON object. |
 | `--personas` | Path to a `personas.json` file. |
 | `--dir` | Path to a `personas/` directory. |
-| `--backend` | Text backend: `mock` or `template` (default `template`). |
+| `--backend` | Text backend: `mock`, `template`, or `native` (default `native`). |
 | `--max-words` | Override the persona word limit. |
 | `--instruction` | Optional one-off steering note. |
 

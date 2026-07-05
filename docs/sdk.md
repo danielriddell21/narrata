@@ -29,10 +29,7 @@ func main() {
 
     engine, err := narrata.New(narrata.Config{
         PersonasPath: "./personas.json",
-        Text: narrata.TextConfig{
-            Backend:   "llama.cpp",
-            ModelPath: "./models/model.gguf",
-        },
+        Text:         narrata.TextConfig{Backend: "native"}, // pure Go, no model
     })
     if err != nil {
         panic(err)
@@ -260,17 +257,18 @@ func onAlert(engine *narrata.Engine, alert Alert) string {
 }
 ```
 
-## 9. Minimal Interface for Backends
+## 9. Pluggable Backends
 
-The inference backend should be replaceable:
+The default `native` backend generates narration in pure Go at runtime — no model
+and no cgo. The backend stays behind an interface, so `native`, `template`, and
+`mock` are interchangeable, and a host can supply its own generator (e.g. wrapping
+a real model) without changing the integration:
 
 ```go
-type LLM interface {
+type Backend interface {
     Generate(ctx context.Context, prompt string) (string, error)
 }
 ```
-
-This keeps llama.cpp, MLX, template output, or optional cloud adapters replaceable without changing the host integration.
 
 ## 10. Error Handling
 

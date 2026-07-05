@@ -7,13 +7,18 @@
 [![Go 1.26](https://img.shields.io/badge/go-1.26-blue)](https://go.dev)
 [![MIT License](https://img.shields.io/badge/licence-MIT-green)](LICENSE)
 
-An embedded, local-first narration runtime for Go. Narrata turns structured
-data and events into short human-readable text and optional speech, shaped by
-configurable personas.
+An embedded narration runtime for Go. Narrata turns structured data and events
+into short human-readable text (and optional speech), shaped by configurable
+personas.
 
 ```text
 input data -> persona -> generate narration -> text/audio result
 ```
+
+**Everything runs at runtime, in pure Go** — no models, no cgo, no external
+files, no dependencies beyond the standard library. Narration is generated in
+house by a procedural, persona-conditioned engine, so a Narrata binary is fully
+self-contained and starts instantly.
 
 It is a library you embed, **not** an assistant, agent, chatbot, memory system,
 or tool-calling framework. See [what Narrata is not](#what-narrata-is-not).
@@ -28,7 +33,7 @@ Requires Go 1.26+.
 
 ## Quick start
 
-The default backend is deterministic and needs no model file, so this runs as-is:
+No model files, no setup — this runs as-is:
 
 ```go
 package main
@@ -60,8 +65,8 @@ func main() {
 }
 ```
 
-Swap in real local inference by setting `Text.Backend` to `"template"` (pure Go)
-or `"llama.cpp"` (GGUF, built with `-tags llama`). See [docs/backends.md](docs/backends.md).
+The default `native` backend is a persona-aware, pure-Go generator (event-shape
+sentences, tone-conditioned per persona). See [docs/backends.md](docs/backends.md).
 
 Runnable programs live in [`examples/`](examples): `monitoring`, `game`, and
 `home_automation`. A development CLI (`go run ./cmd/narrata`) validates personas,
@@ -77,9 +82,8 @@ flowchart LR
     H[Host application] -->|Request| E
     subgraph E["Engine"]
         direction TB
-        PR[Persona registry] --> PB[Prompt builder]
-        PB --> TB[Text backend]
-        TB --> OP[Output policy]
+        PR[Persona registry] --> GE[Narration engine]
+        GE --> OP[Output policy]
         OP --> TT[Optional TTS]
     end
     E -->|"Result: text + audio"| H
@@ -110,10 +114,9 @@ Full docs are in [`docs/`](docs/README.md):
 - [sdk.md](docs/sdk.md) — Go API reference and error handling
 - [personas.md](docs/personas.md) — persona schema and defaults
 - [persona-authoring.md](docs/persona-authoring.md) — writing and scaffolding personas
-- [backends.md](docs/backends.md) — backend selection and cgo backends
+- [backends.md](docs/backends.md) — the pure-Go backends
 - [cli.md](docs/cli.md) — the `narrata` development CLI
 - [roadmap.md](docs/roadmap.md) — phased delivery plan
-- [research.md](docs/research.md) — backend choices and rationale
 
 ## License
 

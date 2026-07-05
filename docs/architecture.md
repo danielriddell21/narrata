@@ -21,7 +21,7 @@ flowchart TD
         direction TB
         R[Persona registry]
         P[Prompt builder]
-        T[Text model backend]
+        T[Narration engine]
         O[Output policy]
         S[Optional TTS backend]
     end
@@ -69,36 +69,17 @@ If a host system wants any of that, it should implement it outside Narrata and c
 ## 5. Package Layout
 
 ```text
-narrata/
-  go.mod
-  README.md
-  personas.default.json
-  examples/
-    game/
-    home_automation/
-    monitoring/
-  internal/
-    prompt/
-    policy/
-    validate/
-  pkg/
-    narrata/
-      engine.go
-      config.go
-      request.go
-      result.go
-      persona.go
-      errors.go
-    backend/
-      text/
-        backend.go
-        llama_cpp.go
-        mock.go
-        template.go
-      tts/
-        backend.go
-        kokoro.go
-        mock.go
+narrata/                  # public library package (module root)
+  engine.go  config.go  request.go  result.go  persona.go  errors.go
+  go.mod  README.md  personas.default.json
+  cmd/narrata/            # developer CLI
+  examples/              # game / home_automation / monitoring
+  backend/
+    text/                # backend.go, native.go, template.go, mock.go
+    tts/                 # backend.go, mock.go
+  internal/              # not part of the public API
+    nlg/                 # in-house pure-Go narration engine (the native backend)
+    prompt/  policy/  validate/  cli/
 ```
 
 Recommended public import:
@@ -117,7 +98,7 @@ Responsibilities:
 
 - Load config.
 - Load personas.
-- Manage model backend lifecycle.
+- Manage backend lifecycle.
 - Accept generation requests.
 - Return text/audio results.
 - Expose close/shutdown methods.
@@ -141,9 +122,10 @@ Responsibilities:
 - Merge built-in and user personas.
 - Support optional hot reload later.
 
-### 6.3 Prompt Builder
+### 6.3 Context Builder
 
-Converts request + persona + data into a compact model prompt.
+Converts request + persona + data into a compact, structured input for the
+narration engine (and a prompt string for the `template`/`mock` backends).
 
 Design goals:
 
@@ -156,18 +138,19 @@ Design goals:
 
 ### 6.4 Text Backend
 
-Abstract interface for local text generation.
+Interface for text generation. The default is the in-house **`native`** backend:
+a pure-Go, persona-conditioned generator (event-shape sentences, tone, salience)
+built on `internal/nlg`. No model, no cgo, no external files — generation happens
+entirely at runtime.
 
-Initial target:
+Other backends:
 
-- llama.cpp/GGUF based backend.
+- `template` — a simpler pure-Go sentence composer.
+- `mock` — deterministic output for tests.
 
-Alternative backends later:
-
-- MLX backend for Apple Silicon.
-- Mock backend for tests.
-- Template backend for very small devices.
-- Optional cloud backend only as a separate adapter, not core default.
+The interface stays pluggable so a host can wrap a real model of its own (via
+`nlg.WithFallback`) if it ever needs open-ended generation — but that is never a
+core dependency.
 
 ### 6.5 Output Policy
 
@@ -186,47 +169,35 @@ Examples:
 
 ### 6.6 TTS Backend
 
-Optional speech synthesis interface.
-
-Initial target:
-
-- Kokoro or Kokoro ONNX style backend.
-
-TTS should be optional and pluggable. The text-generation engine must work without it.
+Optional speech synthesis interface. The default `mock` backend emits a valid WAV
+in pure Go. TTS is optional and pluggable; the text engine works without it.
 
 ## 7. Backend Strategy
 
-### 7.1 Text Model
+### 7.1 Text
 
-Preferred MVP route:
+Narration is generated **in house, in pure Go, at runtime** by the `native`
+backend (`internal/nlg`):
 
-- GGUF model file.
-- llama.cpp-backed inference.
-- Go wrapper around llama.cpp or cgo integration.
+- Structured event + data + persona → salience selection → typed realization →
+  event-shape grammar → tone-conditioned clause → constraint-bounded line.
+- Deterministic (seeded), instant, and self-contained.
 
-Rationale:
+Rationale: a model would add weight, a build toolchain, external files, and
+startup latency for output that is short and structured. An authored,
+persona-conditioned grammar covers narration's structured domain with zero of
+that cost. Open-ended generation, if ever needed, is a host-supplied fallback,
+not a core dependency.
 
-- GGUF is a model format designed for efficient inference with GGML-style executors.
-- llama.cpp is built for local inference across a wide range of hardware.
-- Go can embed the backend directly through bindings or cgo.
+### 7.2 TTS
 
-### 7.2 TTS Model
-
-Preferred MVP route:
-
-- TTS interface first.
-- Kokoro implementation second.
-- Mock TTS for tests.
-
-Rationale:
-
-- Speech is useful but should not block the core runtime.
-- Text output proves the engine first.
-- Audio implementation may require ONNX/runtime decisions.
+- Pure-Go `mock` WAV backend today.
+- A pure-Go synthesiser (e.g. formant) or host-embedded audio can follow, same
+  principle: no models or cgo in the core path.
 
 ## 8. Concurrency Model
 
-Narrata should support concurrent requests, but model backends may have their own limitations.
+Narrata should support concurrent requests, but backends may have their own limitations.
 
 Recommended MVP:
 
