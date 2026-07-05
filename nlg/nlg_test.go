@@ -150,6 +150,27 @@ func TestToneBucketsVaryClause(t *testing.T) {
 	}
 }
 
+func TestVerbLikeEventBecomesClause(t *testing.T) {
+	c := mustClient(t)
+	res, _ := c.Generate(context.Background(), Task{
+		Event: "player_jumped", Data: map[string]any{"player": "Ari"},
+	})
+	if res.Text != "Ari jumped." {
+		t.Fatalf("verb-like event not turned into a clause: %q", res.Text)
+	}
+}
+
+func TestValueWithPeriodNotSplit(t *testing.T) {
+	c := mustClient(t)
+	res, _ := c.Generate(context.Background(), Task{
+		Event: "file_uploaded", Data: map[string]any{"file": "report.pdf"},
+		Constraints: Constraints{MaxSentences: 1},
+	})
+	if !strings.Contains(strings.ToLower(res.Text), "report.pdf") {
+		t.Fatalf("value with a period was split: %q", res.Text)
+	}
+}
+
 func TestSubjectSubstitution(t *testing.T) {
 	c := mustClient(t)
 	// A field matching the event's subject noun becomes the sentence subject.
@@ -260,9 +281,10 @@ func TestFallbackRoutes(t *testing.T) {
 
 func TestWithOpeners(t *testing.T) {
 	c := mustClient(t, WithOpeners("neutral", []string{"CUSTOM — "}))
-	// "tea_brewed" has no shape keyword, so it takes the generic opener path.
+	// "status_report" has no shape keyword and no verb-like word, so it takes
+	// the generic opener path.
 	res, _ := c.Generate(context.Background(), Task{
-		Event: "tea_brewed", Data: map[string]any{"cups": 2},
+		Event: "status_report", Data: map[string]any{"cups": 2},
 		Style: &Style{Tone: "neutral", Humour: "light"}, Seed: 1,
 	})
 	if !strings.HasPrefix(res.Text, "CUSTOM") {

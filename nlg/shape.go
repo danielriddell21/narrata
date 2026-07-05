@@ -15,6 +15,7 @@ const (
 	shapeArrival
 	shapeDeparture
 	shapeChange
+	shapeAction // unclassified but verb-like last word (e.g. "player_jumped")
 )
 
 // shapeKeywords maps an event's action word to its shape.
@@ -58,7 +59,18 @@ func classifyEvent(event string) (shape, string, string) {
 			return sh, subject, words[i]
 		}
 	}
+	// No known keyword: if the last word is verb-like and has a subject before
+	// it, treat it as a generic action ("player_jumped" -> "The player jumped").
+	if n := len(words); n >= 2 && isVerbLike(words[n-1]) {
+		return shapeAction, strings.Join(words[:n-1], " "), words[n-1]
+	}
 	return shapeGeneric, "", ""
+}
+
+// isVerbLike reports whether a word looks like a past-tense or continuous verb.
+// It deliberately ignores "-s" endings to avoid misreading plural nouns.
+func isVerbLike(w string) bool {
+	return len(w) >= 4 && (strings.HasSuffix(w, "ed") || strings.HasSuffix(w, "ing"))
 }
 
 // subjectPhrase resolves the subject: if a data field's key matches the subject

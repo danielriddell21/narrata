@@ -236,7 +236,12 @@ func (c *Client) narrate(t Task, style Style, cons Constraints) string {
 	subject, rest := subjectPhrase(noun, fields)
 	rest = salient(rest, maxFields(style, cons))
 
-	clause := capitalise(clauseFor(sh, action, subject, toneBucket(style.Tone), r))
+	var clause string
+	if sh == shapeAction {
+		clause = capitalise(subject + " " + action)
+	} else {
+		clause = capitalise(clauseFor(sh, action, subject, toneBucket(style.Tone), r))
+	}
 	if p := fitPhrases(clause, realizeAll(rest), cons); len(p) > 0 {
 		clause += " — " + strings.Join(p, ", ")
 	}
@@ -254,7 +259,7 @@ func (c *Client) describe(t Task, style Style, cons Constraints) string {
 	if p := fitPhrases(line, realizeAll(rest), cons); len(p) > 0 {
 		line += " — " + strings.Join(p, ", ")
 	}
-	return applyBudget(line+".", cons)
+	return terminate(applyBudget(line+".", cons), style)
 }
 
 // summarize condenses several salient fields into one line, optionally led by
@@ -278,7 +283,7 @@ func (c *Client) summarize(t Task, style Style, cons Constraints) string {
 	default:
 		line = lead
 	}
-	return applyBudget(capitalise(line)+".", cons)
+	return terminate(applyBudget(capitalise(line)+".", cons), style)
 }
 
 func summaryMax(style Style) int {

@@ -2,7 +2,6 @@ package nlg
 
 import (
 	"hash/fnv"
-	"regexp"
 	"strings"
 )
 
@@ -166,18 +165,22 @@ func capitalise(s string) string {
 	return strings.ToUpper(s[:1]) + s[1:]
 }
 
-var sentenceRe = regexp.MustCompile(`[^.!?]+[.!?]+|\S[^.!?]*$`)
-
+// limitSentences keeps the first max sentences. A terminator only ends a
+// sentence when it is at the end of the string or followed by whitespace, so
+// periods inside tokens (e.g. "report.pdf") do not split the text.
 func limitSentences(s string, max int) string {
-	m := sentenceRe.FindAllString(s, -1)
-	if len(m) <= max {
-		return s
+	count := 0
+	for i := 0; i < len(s); i++ {
+		if c := s[i]; c == '.' || c == '!' || c == '?' {
+			if i == len(s)-1 || s[i+1] == ' ' {
+				count++
+				if count >= max {
+					return strings.TrimSpace(s[:i+1])
+				}
+			}
+		}
 	}
-	kept := make([]string, 0, max)
-	for i := 0; i < max && i < len(m); i++ {
-		kept = append(kept, strings.TrimSpace(m[i]))
-	}
-	return strings.Join(kept, " ")
+	return s
 }
 
 func limitWords(s string, max int) string {
