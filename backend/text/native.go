@@ -45,6 +45,26 @@ func (n *Native) Generate(ctx context.Context, p string, _ GenerateOptions) (Res
 	return Result{Text: res.Text, Tokens: len(strings.Fields(res.Text))}, nil
 }
 
+// GenerateStructured produces narration from typed inputs, bypassing the prompt
+// string so numbers stay numeric and the full persona style is used.
+func (n *Native) GenerateStructured(ctx context.Context, in StructuredInput, _ GenerateOptions) (Result, error) {
+	if err := ctx.Err(); err != nil {
+		return Result{}, fmt.Errorf("native backend: %w", err)
+	}
+	res, err := n.client.Generate(ctx, nlg.Task{
+		Intent:      nlg.Narrate,
+		Event:       in.Event,
+		Data:        in.Data,
+		Hint:        in.Instruction,
+		Style:       &nlg.Style{Tone: in.Style.Tone, Energy: in.Style.Energy, Humour: in.Style.Humour, Verbosity: in.Style.Verbosity},
+		Constraints: nlg.Constraints{MaxWords: in.MaxWords, MaxSentences: in.MaxSentences, AllowMarkdown: in.AllowMarkdown},
+	})
+	if err != nil {
+		return Result{}, fmt.Errorf("native backend: %w", err)
+	}
+	return Result{Text: res.Text, Tokens: len(strings.Fields(res.Text))}, nil
+}
+
 // Close is a no-op.
 func (n *Native) Close() error { return nil }
 

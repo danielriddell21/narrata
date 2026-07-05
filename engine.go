@@ -156,28 +156,50 @@ func (e *Engine) Generate(ctx context.Context, req Request) (Result, error) {
 	start := time.Now()
 	eff := effectiveConstraints(persona, req)
 
-	p := prompt.Build(prompt.Input{
-		PersonaName:   persona.Name,
-		Description:   persona.Description,
-		Tone:          persona.Style.Tone,
-		Energy:        persona.Style.Energy,
-		Humour:        persona.Style.Humour,
-		Verbosity:     persona.Style.Verbosity,
-		Rules:         persona.Rules,
-		MaxWords:      eff.maxWords,
-		MaxSentences:  eff.maxSentences,
-		AllowMarkdown: eff.allowMarkdown,
-		Event:         req.Event,
-		DataLines:     prompt.CompactData(req.Data),
-		Instruction:   req.Instruction,
-	})
-
-	gen, err := e.text.Generate(ctx, p, text.GenerateOptions{
+	opts := text.GenerateOptions{
 		Temperature:   e.cfg.Text.Temperature,
 		TopP:          e.cfg.Text.TopP,
 		MaxTokens:     e.cfg.Text.MaxTokens,
 		ContextTokens: e.cfg.Text.ContextTokens,
-	})
+	}
+
+	var gen text.Result
+	var err error
+	if sb, ok := e.text.(text.Structured); ok {
+		// Typed path: hand the backend structured inputs (no prompt round-trip).
+		gen, err = sb.GenerateStructured(ctx, text.StructuredInput{
+			Event:       req.Event,
+			Data:        req.Data,
+			Instruction: req.Instruction,
+			Style: text.Style{
+				Tone:      persona.Style.Tone,
+				Energy:    persona.Style.Energy,
+				Humour:    persona.Style.Humour,
+				Verbosity: persona.Style.Verbosity,
+			},
+			Rules:         persona.Rules,
+			MaxWords:      eff.maxWords,
+			MaxSentences:  eff.maxSentences,
+			AllowMarkdown: eff.allowMarkdown,
+		}, opts)
+	} else {
+		p := prompt.Build(prompt.Input{
+			PersonaName:   persona.Name,
+			Description:   persona.Description,
+			Tone:          persona.Style.Tone,
+			Energy:        persona.Style.Energy,
+			Humour:        persona.Style.Humour,
+			Verbosity:     persona.Style.Verbosity,
+			Rules:         persona.Rules,
+			MaxWords:      eff.maxWords,
+			MaxSentences:  eff.maxSentences,
+			AllowMarkdown: eff.allowMarkdown,
+			Event:         req.Event,
+			DataLines:     prompt.CompactData(req.Data),
+			Instruction:   req.Instruction,
+		})
+		gen, err = e.text.Generate(ctx, p, opts)
+	}
 	if err != nil {
 		return Result{}, mapGenErr(err)
 	}

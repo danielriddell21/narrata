@@ -198,3 +198,21 @@ func TestDefaultTimeoutApplied(t *testing.T) {
 		t.Fatalf("Generate: %v", err)
 	}
 }
+
+func TestStructuredNativePathUsesFullStyle(t *testing.T) {
+	e := newTestEngine(t, Config{Text: TextConfig{Backend: "native"}})
+	res, err := e.Generate(context.Background(), Request{
+		PersonaID: "dungeon_master", // dramatic, high energy
+		Event:     "reactor_critical",
+		Data:      map[string]any{"reactor": "core-1"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasSuffix(res.Text, "!") {
+		t.Fatalf("expected dramatic exclamation via structured path, got %q", res.Text)
+	}
+	if !strings.HasPrefix(res.Text, "Core-1") {
+		t.Fatalf("expected subject substitution, got %q", res.Text)
+	}
+}
