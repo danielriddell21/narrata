@@ -168,15 +168,14 @@ authored variety, not scale.
 
 ```
 narrata/
-  nlg/                  # the library — stdlib only, extractable to its own module
+  internal/nlg/         # implementation detail of the narrata module (stdlib only)
     nlg.go              # Client, Persona, Task, Result, Options
     grammar.go          # weighted grammar + expansion
-    phrases.go          # tone-conditioned pools (Go literals; no embedded assets)
-    realize.go          # field -> phrase realizers
-    salience.go         # field kind inference + scoring
+    shape.go            # event-shape templates + tone buckets
+    field.go            # field kind inference, salience, realizers
     persona.go          # Persona + JSON loading (shared shape with narrata)
     nlg_test.go
-  backend/text/native.go  # adapter: prompt -> nlg.Task -> nlg.Generate
+  backend/text/native.go  # adapter + structured path: -> nlg.Task -> nlg.Generate
 ```
 
 Grammar/phrases are **authored Go literals** (KB-scale content, not a trained
@@ -187,8 +186,9 @@ lets hosts supply their own grammar to extend it.
 
 - **v1 intents:** `narrate` + `describe`. `summarize`/`classify`/`extract` are in
   the API from day one but implemented later.
-- **Identity:** lives at `narrata/nlg`, designed with no Narrata imports so it can
-  become its own module with zero API change.
+- **Identity:** lives at `internal/nlg` — an implementation detail of the narrata
+  module, not a public package. `narrata` is the package; `nlg` is not imported by
+  external users. It keeps no Narrata imports so the boundary stays clean.
 - **Fallback:** open-ended intents require `WithFallback`; without it they return
   `ErrNeedsModel` rather than degraded nonsense.
 

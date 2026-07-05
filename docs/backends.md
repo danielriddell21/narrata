@@ -18,7 +18,7 @@ flowchart LR
 
 | Kind | Name       | Notes |
 |------|------------|-------|
-| Text | `native` (alias `grammar`) | Persona-aware pure-Go generation (event-shape sentences, tone-conditioned) built on the [`nlg`](../nlg) library. Default for the CLI. |
+| Text | `native` (alias `grammar`) | Persona-aware pure-Go generation (event-shape sentences, tone-conditioned) built on the [`nlg`](../internal/nlg) library. Default for the CLI. |
 | Text | `template` | Simple pure-Go sentence composer. |
 | Text | `mock`     | Deterministic; the default when no backend is set. Ideal for tests. |
 | TTS  | `mock`     | Emits a valid 16-bit PCM WAV derived from the text. Optional. |

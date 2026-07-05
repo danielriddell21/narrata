@@ -8,7 +8,7 @@ model files, no build tags.
 
 | Name       | Notes |
 |------------|-------|
-| `native` (alias `grammar`) | Persona-aware pure-Go generation (event-shape sentences, tone-conditioned) built on the [`nlg`](../nlg) library. |
+| `native` (alias `grammar`) | Persona-aware pure-Go generation (event-shape sentences, tone-conditioned) built on the [`nlg`](../internal/nlg) library. |
 | `template` | Simple pure-Go sentence composer. |
 | `mock`     | Deterministic; the default when no backend is set. Ideal for tests. |
 

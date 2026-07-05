@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/danielriddell21/narrata/nlg"
+	"github.com/danielriddell21/narrata/internal/nlg"
 )
 
 // Example shows the LLM-shaped call site: define a persona, then generate an

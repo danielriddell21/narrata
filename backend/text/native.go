@@ -6,16 +6,15 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/danielriddell21/narrata/internal/nlg"
 	"github.com/danielriddell21/narrata/internal/prompt"
-	"github.com/danielriddell21/narrata/nlg"
 )
 
 // Native is a pure-Go text backend built on the nlg library: it composes
 // persona-flavoured narration from the event, data, and style with no model
 // file and no cgo. Output is deterministic for a given input.
 //
-// It is a thin adapter — the generation logic lives in
-// github.com/danielriddell21/narrata/nlg, which is usable on its own.
+// It is a thin adapter — the generation logic lives in the internal nlg package.
 type Native struct{ client *nlg.Client }
 
 // NewNative returns a Native backend.
