@@ -32,14 +32,14 @@ backup_uploaded        The backup uploaded — size 512MB.
 player_died            Ari has fallen to the Bone Dragon.
 
 ## executive_briefing (professional)
-washing_machine_done   The washing machine is done — cycle cottons, in the utility room.
+washing_machine_done   The washing machine is done — cycle cottons and in the utility room.
 door_opened            The door is open — in the garage.
-service_degraded       Payments-api is struggling — cpu 96%, latency 950ms.
+service_degraded       Payments-api is struggling — cpu 96% and latency 950ms.
 disk_full              /dev/sda is spiking — usage 99%.
 server_offline         Web-2 went dark — region eu-west.
-player_low_health      Ari is nearly out — Bone Dragon, health 8.
+player_low_health      Ari is nearly out — Bone Dragon and health 8.
 goal_scored            Rovers scored — minute 89.
-backup_uploaded        The backup uploaded — file db.sql, size 512MB.
+backup_uploaded        The backup uploaded — file db.sql and size 512MB.
 player_died            Ari has fallen to the Bone Dragon.
 
 ## sports_commentator (excited)

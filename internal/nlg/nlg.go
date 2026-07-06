@@ -273,7 +273,7 @@ func (c *Client) narrate(t Task, style Style, cons Constraints) string {
 		clause = capitalise(clauseFor(sh, action, subject, toneBucket(style.Tone), r))
 	}
 	if p := fitPhrases(clause, realizeAll(rest), cons); len(p) > 0 {
-		clause += " — " + strings.Join(p, ", ")
+		clause += " — " + joinList(p)
 	}
 	return terminate(applyBudget(clause+".", cons), style)
 }
@@ -290,7 +290,7 @@ func (c *Client) describe(t Task, style Style, cons Constraints) string {
 	// Describe is a snapshot: lead with the subject, no opener.
 	line := capitalise(subject)
 	if p := fitPhrases(line, realizeAll(rest), cons); len(p) > 0 {
-		line += " — " + strings.Join(p, ", ")
+		line += " — " + joinList(p)
 	}
 	return terminate(applyBudget(line+".", cons), style)
 }
@@ -310,9 +310,9 @@ func (c *Client) summarize(t Task, style Style, cons Constraints) string {
 	var line string
 	switch {
 	case lead != "" && len(kept) > 0:
-		line = lead + " — " + strings.Join(kept, ", ")
+		line = lead + " — " + joinList(kept)
 	case len(kept) > 0:
-		line = strings.Join(kept, ", ")
+		line = joinList(kept)
 	default:
 		line = lead
 	}

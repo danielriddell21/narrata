@@ -100,7 +100,7 @@ func compose(openers []string, eventPhrase string, phrases []string, r *rng, con
 
 	var dc string
 	if len(phrases) > 0 {
-		joined := strings.Join(phrases, ", ")
+		joined := joinList(phrases)
 		switch r.intn(3) {
 		case 0:
 			dc = " — " + joined
@@ -132,6 +132,21 @@ func fitPhrases(base string, phrases []string, cons Constraints) []string {
 		kept = append(kept, p)
 	}
 	return kept
+}
+
+// joinList joins phrases with commas and a conjunction before the last item
+// ("a", "a and b", "a, b, and c").
+func joinList(items []string) string {
+	switch len(items) {
+	case 0:
+		return ""
+	case 1:
+		return items[0]
+	case 2:
+		return items[0] + " and " + items[1]
+	default:
+		return strings.Join(items[:len(items)-1], ", ") + ", and " + items[len(items)-1]
+	}
 }
 
 // applyBudget trims a line to the sentence/word constraints.
