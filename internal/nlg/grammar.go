@@ -173,6 +173,28 @@ func humanizeEvent(event string) string {
 	return strings.Join(words, " ")
 }
 
+// trailingAsides are sentence-adverb flourishes some templates append after a
+// comma ("... is done, somehow"). They read as an afterthought on the whole
+// clause, so an adjunct must slot before them, not after.
+var trailingAsides = map[string]bool{
+	"somehow": true, "naturally": true, "finally": true,
+	"alas": true, "at last": true,
+}
+
+// splitTrailingAside separates a trailing sentence-adverb aside (", somehow")
+// from a clause, returning the head and the aside (including its leading ", ").
+// It returns an empty aside when the clause has none.
+func splitTrailingAside(clause string) (head, aside string) {
+	i := strings.LastIndex(clause, ", ")
+	if i < 0 {
+		return clause, ""
+	}
+	if trailingAsides[strings.ToLower(clause[i+2:])] {
+		return clause[:i], clause[i:]
+	}
+	return clause, ""
+}
+
 func capitalise(s string) string {
 	if s == "" {
 		return s

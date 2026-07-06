@@ -276,7 +276,8 @@ func (c *Client) narrate(t Task, style Style, cons Constraints) string {
 	// clause ("done in the utility room"); the rest form an em-dash detail list.
 	adjuncts, details := partitionAdjuncts(rest)
 	if adj := fitPhrases(clause, realizeAll(adjuncts), cons); len(adj) > 0 {
-		clause += " " + strings.Join(adj, " ")
+		head, aside := splitTrailingAside(clause)
+		clause = head + " " + strings.Join(adj, " ") + aside
 	}
 	if p := fitPhrases(clause, realizeAll(details), cons); len(p) > 0 {
 		clause += " — " + joinList(p)

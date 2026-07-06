@@ -269,6 +269,22 @@ func TestCombatantNameReadsAsRelation(t *testing.T) {
 	}
 }
 
+func TestAdjunctSlotsBeforeTrailingAside(t *testing.T) {
+	c := mustClient(t)
+	// A wry template's trailing aside ("done, somehow") must stay at the end when
+	// an adjunct is attached, not split the clause ("done, somehow in the room").
+	res, _ := c.Generate(context.Background(), Task{
+		Event: "washing_machine_done", Data: map[string]any{"room": "utility room"},
+		Style: &Style{Tone: "dry", Humour: "witty"}, Seed: 1,
+	})
+	if strings.Contains(res.Text, "somehow in the") {
+		t.Fatalf("aside splits the clause: %q", res.Text)
+	}
+	if strings.Contains(res.Text, ", somehow") && !strings.HasSuffix(res.Text, ", somehow.") {
+		t.Fatalf("aside not relocated to the end: %q", res.Text)
+	}
+}
+
 func TestBudgetDropsWholeDetails(t *testing.T) {
 	c := mustClient(t)
 	res, _ := c.Generate(context.Background(), Task{

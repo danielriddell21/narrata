@@ -21,7 +21,7 @@ backup_uploaded        The backup uploaded — size 512MB!
 player_died            Ari has fallen to the Bone Dragon!
 
 ## funny_narrator (dry)
-washing_machine_done   The washing machine is done, somehow in the utility room.
+washing_machine_done   The washing machine is done in the utility room, somehow.
 door_opened            The door opened in the garage.
 service_degraded       Payments-api is struggling — cpu 96%.
 disk_full              /dev/sda is high — usage 99%.
