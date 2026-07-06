@@ -142,7 +142,7 @@ func fieldScore(f Field) int {
 	if impliedPercent(f.Key, f.Value) {
 		s++
 		if v, ok := toFloat(f.Value); ok && (v >= 90 || v <= 10) {
-			s++ // near a limit — likely why the event fired
+			s++ // near a limit, probably why the event fired
 		}
 	}
 	return s

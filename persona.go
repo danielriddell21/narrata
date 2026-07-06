@@ -60,7 +60,7 @@ type PersonaConstraints struct {
 }
 
 // PersonaEventPolicy is the schema-level event policy: the persona's default
-// rendering preferences. It is rendering policy, not autonomy — Narrata never
+// rendering preferences. It is rendering policy, not autonomy: Narrata never
 // schedules or acts on it.
 type PersonaEventPolicy struct {
 	// DefaultImportance is the baseline importance for the persona's events.

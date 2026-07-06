@@ -1,8 +1,8 @@
 # Backends
 
 Narrata's text and TTS backends sit behind interfaces and are selected by name
-via `Config.Text.Backend` / `Config.TTS.Backend`. They are pure Go — no cgo, no
-model files, no build tags.
+via `Config.Text.Backend` / `Config.TTS.Backend`. They are pure Go, with no
+cgo, no model files and no build tags.
 
 ## Text backends
 
@@ -22,7 +22,7 @@ All backends compile and run everywhere with `go build ./...`.
 
 ## Bringing your own model
 
-For tasks that genuinely need a language model, implement the `nlg.Backend`
+For tasks that do need a language model, implement the `nlg.Backend`
 interface (`Generate(ctx, prompt) (string, error)`) around any inference engine
 and register it with `nlg.WithFallback`, or wrap it as a text backend. Narrata
 itself ships no model and no cgo.

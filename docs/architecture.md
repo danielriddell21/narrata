@@ -138,19 +138,19 @@ Design goals:
 
 ### 6.4 Text Backend
 
-Interface for text generation. The default is the in-house **`native`** backend:
+Interface for text generation. The default is the in-house `native` backend:
 a pure-Go, persona-conditioned generator (event-shape sentences, tone, salience)
-built on `internal/nlg`. No model, no cgo, no external files — generation happens
-entirely at runtime.
+built on `internal/nlg`. There is no model, no cgo and no external files;
+generation happens entirely at runtime.
 
 Other backends:
 
-- `template` — a simpler pure-Go sentence composer.
-- `mock` — deterministic output for tests.
+- `template`: a simpler pure-Go sentence composer.
+- `mock`: deterministic output for tests.
 
 The interface stays pluggable so a host can wrap a real model of its own (via
-`nlg.WithFallback`) if it ever needs open-ended generation — but that is never a
-core dependency.
+`nlg.WithFallback`) if it ever needs open-ended generation, but that never
+becomes a core dependency.
 
 ### 6.5 Output Policy
 

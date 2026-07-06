@@ -8,7 +8,7 @@ import (
 )
 
 // Example shows the LLM-shaped call site: define a persona, then generate an
-// in-character line from a structured event — pure Go, no model.
+// in-character line from a structured event, all in Go with no model.
 func Example() {
 	c, _ := nlg.New(nlg.WithPersona(nlg.Persona{
 		ID:    "ops",

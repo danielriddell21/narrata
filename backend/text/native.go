@@ -14,7 +14,7 @@ import (
 // persona-flavoured narration from the event, data, and style at runtime, with
 // no cgo. Output is deterministic for a given input.
 //
-// It is a thin adapter — the generation logic lives in the internal nlg package.
+// It is a thin adapter; the generation logic lives in the internal nlg package.
 type Native struct{ client *nlg.Client }
 
 // NewNative returns a Native backend.

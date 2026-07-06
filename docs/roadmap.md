@@ -30,9 +30,9 @@ Exit criteria:
 ## Phase 1: Local Text Generation
 
 **Status: implemented.** The in-house `native` backend (`internal/nlg`) generates
-persona-conditioned narration in pure Go at runtime — no model, no cgo, no
-external files; timeout, cancellation, and bounded concurrency are handled by the
-engine; the game example is included.
+persona-conditioned narration in pure Go at runtime, with no model, cgo or
+external files. Timeout, cancellation, and bounded concurrency are handled by the
+engine, and the game example is included.
 
 Goal: generate real, persona-shaped text locally, in pure Go.
 

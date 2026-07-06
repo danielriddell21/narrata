@@ -257,8 +257,8 @@ func onAlert(engine *narrata.Engine, alert Alert) string {
 
 ## 9. Pluggable Backends
 
-The default `native` backend generates narration in pure Go at runtime — no model
-and no cgo. The backend stays behind an interface, so `native`, `template`, and
+The default `native` backend generates narration in pure Go at runtime, without
+a model or cgo. The backend stays behind an interface, so `native`, `template`, and
 `mock` are interchangeable, and a host can supply its own generator (e.g. wrapping
 a real model) without changing the integration:
 

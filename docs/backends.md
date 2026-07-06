@@ -2,8 +2,8 @@
 
 Text and TTS backends sit behind interfaces (`TextBackend`, `TTSBackend`) and
 are selected by name via `Config.Text.Backend` and `Config.TTS.Backend`. The
-text engine works with no TTS backend present. Everything is pure Go — no cgo,
-no model files.
+text engine works with no TTS backend present. Everything is pure Go, with no
+cgo and no model files.
 
 ```mermaid
 flowchart LR

@@ -1,6 +1,6 @@
 # narrata
 
-*n.* the craft of telling what happened — turning structured events into a voice.
+*n.* the telling of what happened.
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/danielriddell21/narrata.svg)](https://pkg.go.dev/github.com/danielriddell21/narrata)
 [![CI](https://github.com/danielriddell21/narrata/actions/workflows/ci.yaml/badge.svg)](https://github.com/danielriddell21/narrata/actions/workflows/ci.yaml)
@@ -15,10 +15,10 @@ personas.
 input data -> persona -> generate narration -> text/audio result
 ```
 
-**Everything runs at runtime, in pure Go** — no models, no cgo, no external
-files, no dependencies beyond the standard library. Narration is generated in
-house by a procedural, persona-conditioned engine, so a Narrata binary is fully
-self-contained and starts instantly.
+Everything happens at runtime in pure Go. There are no models, no cgo and no
+external files, and the only dependency is the standard library. Narration
+comes from a small procedural engine conditioned on the persona, so the
+resulting binary is self-contained and starts immediately.
 
 It is a library you embed, **not** an assistant, agent, chatbot, memory system,
 or tool-calling framework. See [what Narrata is not](#what-narrata-is-not).
@@ -33,7 +33,7 @@ Requires Go 1.26+.
 
 ## Quick start
 
-No model files, no setup — this runs as-is:
+This runs as-is, no setup needed:
 
 ```go
 package main
@@ -65,12 +65,13 @@ func main() {
 }
 ```
 
-The default `native` backend is a persona-aware, pure-Go generator (event-shape
-sentences, tone-conditioned per persona). See [docs/backends.md](docs/backends.md).
+The default `native` backend builds sentences from the event shape and the
+persona's tone. See [docs/backends.md](docs/backends.md).
 
 Runnable programs live in [`examples/`](examples): `monitoring`, `game`, and
-`home_automation`. A development CLI (`go run ./cmd/narrata`) validates personas,
-scaffolds new ones, and renders events from the terminal — see [docs/cli.md](docs/cli.md).
+`home_automation`. There is also a development CLI (`go run ./cmd/narrata`)
+that validates personas, scaffolds new ones, and renders events from the
+terminal. See [docs/cli.md](docs/cli.md).
 
 ## Architecture
 
@@ -95,7 +96,7 @@ Details in [docs/architecture.md](docs/architecture.md).
 
 `narrator`, `home_announcer`, `funny_narrator`, `dungeon_master`,
 `executive_briefing`, `newsreader`, `sports_commentator`, `sci_fi_computer`,
-`robot_butler`. Customise or add your own via `personas.json` — see
+`robot_butler`. Customise or add your own via `personas.json`, described in
 [docs/personas.md](docs/personas.md).
 
 ## What Narrata is NOT
@@ -109,14 +110,14 @@ public API exposes none of those concepts, and a test enforces it.
 
 Full docs are in [`docs/`](docs/README.md):
 
-- [spec.md](docs/spec.md) — mission, goals, non-goals, use cases
-- [architecture.md](docs/architecture.md) — boundaries, flow, components
-- [sdk.md](docs/sdk.md) — Go API reference and error handling
-- [personas.md](docs/personas.md) — persona schema and defaults
-- [persona-authoring.md](docs/persona-authoring.md) — writing and scaffolding personas
-- [backends.md](docs/backends.md) — the pure-Go backends
-- [cli.md](docs/cli.md) — the `narrata` development CLI
-- [roadmap.md](docs/roadmap.md) — phased delivery plan
+- [spec.md](docs/spec.md): mission, goals, non-goals, use cases
+- [architecture.md](docs/architecture.md): boundaries, flow, components
+- [sdk.md](docs/sdk.md): Go API reference and error handling
+- [personas.md](docs/personas.md): persona schema and defaults
+- [persona-authoring.md](docs/persona-authoring.md): writing and scaffolding personas
+- [backends.md](docs/backends.md): the pure-Go backends
+- [cli.md](docs/cli.md): the `narrata` development CLI
+- [roadmap.md](docs/roadmap.md): phased delivery plan
 
 ## License
 

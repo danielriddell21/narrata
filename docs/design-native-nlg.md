@@ -1,20 +1,20 @@
-# Design: `nlg` — a pure-Go, persona-aware, zero-weight generation library
+# Design: nlg, a pure-Go persona-aware generation library
 
-**Branch:** `exp/pure-go-backends` · **Status:** proposed design
+**Branch:** `exp/pure-go-backends` · **Status:** implemented
 
 ## Summary
 
-`nlg` is a small Go library with an **LLM-shaped call site** that you can drop in
-wherever you'd otherwise call an LLM for a **structured** task — and specify a
-**persona** to shape the voice. It is **pure Go, standard-library only, no trained
-weights, no model files, no cgo**. Output is deterministic and instant.
+`nlg` is a small Go library with an LLM-shaped call site. You can drop it in
+wherever you would otherwise call an LLM for a structured task, and give it a
+persona to shape the voice. It is pure Go, standard-library only, with no
+trained weights, no model files and no cgo. Output is deterministic and fast.
 
-It is **procedural generation, not a neural model**: the capability comes from an
+This is procedural generation, not a neural model. The capability comes from an
 authored, persona-conditioned grammar plus runtime statistics and constraint
-solving — not from learned parameters. It covers the *structured* subset of
-"things people use an LLM for" and, for the open-ended rest, exposes the **same
-interface** with a pluggable real backend so it degrades gracefully instead of
-pretending. See [What it can / can't do](#what-it-can--cant-do).
+solving rather than learned parameters. It covers the structured subset of
+"things people use an LLM for". For the open-ended rest it exposes the same
+interface with a pluggable real backend, so it fails clearly instead of
+pretending. See [What it can and can't do](#what-it-can-and-cant-do).
 
 ## Call site
 
@@ -23,7 +23,6 @@ pretending. See [What it can / can't do](#what-it-can--cant-do).
 dm := nlg.Persona{
     ID:    "dungeon_master",
     Style: nlg.Style{Tone: "dramatic", Energy: "high", Humour: "light", Verbosity: "short"},
-    Rules: []string{"vivid but concise", "never break character"},
     Constraints: nlg.Constraints{MaxWords: 24, MaxSentences: 2},
 }
 
@@ -36,7 +35,7 @@ out, _ := c.Generate(ctx, nlg.Task{
     Data:    map[string]any{"player": "Ari", "health": 8, "enemy": "Bone Dragon"},
     Constraints: nlg.Constraints{MaxWords: 20}, // overrides persona default
 })
-// out.Text: "Ari staggers as the Bone Dragon closes in — no time for optimism."
+// out.Text: "Ari is on the brink facing the Bone Dragon!"
 ```
 
 ## Public API (sketch)
@@ -119,47 +118,47 @@ flowchart LR
   Con --> Out[Result.Text]
 ```
 
-1. **Salience** — classify fields by kind (quantity, state, name, place, time,
-   flag) and keep the top 1–2 by a narration-worthiness score, scaled by
+1. Salience. Classify fields by kind (quantity, state, name, place, time,
+   flag) and keep the top 1-2 by a narration-worthiness score, scaled by
    verbosity and the word budget. Avoids dumping every key/value.
-2. **Realize** — per-kind realizers turn fields into fragments: `health:8` →
-   "health at 8"; `room:"utility"` → "in the utility room".
-3. **Grammar** — a small weighted grammar expands
+2. Realize. Per-kind realizers turn fields into fragments: `health:8` becomes
+   "health at 8", `room:"utility"` becomes "in the utility room".
+3. Grammar. A small grammar expands
    `S → {opener}? {event_clause} {data_clause}? {closer}?`, each non-terminal
    choosing a production conditioned on the persona's tone/energy/humour, with
-   **event-shape templates** (completion / threshold / arrival / state-change /
+   event-shape templates (completion / threshold / arrival / state-change /
    generic) matched from the event name.
-4. **Constraint-aware expansion** — budget-driven: optional constituents are
-   included only if they fit `MaxWords`/`MaxSentences`; output is correct by
-   construction, not trimmed after. `Humour=="none"` disables witty intensifiers.
-5. **Determinism** — a seeded PRNG (from `Seed` or a hash of the Task) drives all
+4. Constraint-aware expansion. Budget-driven: optional constituents are
+   included only if they fit `MaxWords`/`MaxSentences`, with a final word and
+   sentence cap as a backstop. `Humour=="none"` disables witty intensifiers.
+5. Determinism. A seeded PRNG (from `Seed` or a hash of the Task) drives all
    weighted choices: stable per input, reproducible in tests, varied across
    inputs.
 
-Other intents reuse the pieces: `summarize` = salience over many fields;
-`classify` = rules/keyword scoring → `Labels`; `extract` = schema-guided field
-realization returning structured data.
+Other intents reuse the pieces. `summarize` is salience over many fields,
+`classify` is keyword scoring against `Labels`, and `extract` is schema-guided
+field realization returning structured data.
 
-## What it can / can't do
+## What it can and can't do
 
-**Can (pure Go, persona-conditioned):** narrate/describe structured data,
+Can (pure Go, persona-conditioned): narrate/describe structured data,
 summarize known fields, classify into a fixed label set, extract against a
-schema. Deterministic, instant, zero deps.
+schema. Deterministic, fast, zero deps.
 
-**Can't (needs weights):** open-ended Q&A, reasoning, understanding arbitrary
+Can't (needs weights): open-ended Q&A, reasoning, understanding arbitrary
 free-form natural language, novel fluent prose. For these, set `WithFallback`
 to a real backend; `Generate` routes there (or returns a typed
 `ErrNeedsModel`) instead of faking it.
 
-Quality is bounded by the authored grammar/phrase pools — breadth comes from
-authored variety, not scale.
+Quality is bounded by the authored grammar and phrase pools. Breadth comes
+from authored variety, not scale.
 
-## Techniques, mapped honestly
+## Technique mapping
 
 | LLM idea | Weight-free analogue |
 |---|---|
-| Constrained / structured decoding | Grammar productions guarantee shape & spec compliance |
-| Sampling (temp/top-p) | Seeded weighted choice among productions |
+| Constrained / structured decoding | Grammar productions guarantee shape and spec compliance |
+| Sampling (temp/top-p) | Seeded choice among authored productions |
 | System prompt / control tokens | `Persona` selects grammars, pools, connectives |
 | Summarization focus | Salience scoring picks narration-worthy fields |
 | n-gram smoothing (optional) | Low-order Markov over an authored per-tone connective set |
@@ -170,7 +169,7 @@ authored variety, not scale.
 narrata/
   internal/nlg/         # implementation detail of the narrata module (stdlib only)
     nlg.go              # Client, Persona, Task, Result, Options
-    grammar.go          # weighted grammar + expansion
+    grammar.go          # openers, joins, budgets, seeded rng
     shape.go            # event-shape templates + tone buckets
     field.go            # field kind inference, salience, realizers
     persona.go          # Persona + JSON loading (shared shape with narrata)
@@ -178,50 +177,50 @@ narrata/
   backend/text/native.go  # adapter + structured path: -> nlg.Task -> nlg.Generate
 ```
 
-Grammar/phrases are **authored Go literals** (KB-scale content, not a trained
-model, not embedded files) — keeps it literally zero-asset. A `Generator`/option
-lets hosts supply their own grammar to extend it.
+Grammar and phrases are authored Go literals (KB-scale content, not a trained
+model, not embedded files), which keeps the library zero-asset. Hosts extend it
+through `WithOpeners` (per-tone opener pools) and per-event `Task.Examples`
+templates; the clause templates themselves are not currently replaceable.
 
-## Decisions (defaults; easy to change)
+## Decisions
 
-- **v1 intents:** `narrate` + `describe`. `summarize`/`classify`/`extract` are in
+- v1 intents: `narrate` and `describe`. `summarize`/`classify`/`extract` are in
   the API from day one but implemented later.
-- **Identity:** lives at `internal/nlg` — an implementation detail of the narrata
-  module, not a public package. `narrata` is the package; `nlg` is not imported by
-  external users. It keeps no Narrata imports so the boundary stays clean.
-- **Fallback:** open-ended intents require `WithFallback`; without it they return
-  `ErrNeedsModel` rather than degraded nonsense.
+- Identity: lives at `internal/nlg` as an implementation detail of the narrata
+  module, not a public package. `narrata` is the package; `nlg` is not imported
+  by external users. It keeps no Narrata imports so the boundary stays clean.
+- Fallback: open-ended intents require `WithFallback`; without it they return
+  `ErrNeedsModel` rather than degraded output.
 
 ## Phased plan
 
-**Status: Phases 1–6 implemented** on `exp/pure-go-backends` (package `nlg`, with
-`narrate`/`describe`/`summarize`/`classify`/`extract`, event-shape templates,
-salience + realizers, constraint-aware expansion, `WithFallback`/`ErrNeedsModel`,
-`WithOpeners` extensibility, tests, benchmarks, and a godoc example). The
-`native` text backend routes through it.
+Status: phases 1-6 are implemented on `exp/pure-go-backends` (package `nlg`,
+with `narrate`/`describe`/`summarize`/`classify`/`extract`, event-shape
+templates, salience and realizers, constraint-aware expansion,
+`WithFallback`/`ErrNeedsModel`, `WithOpeners` extensibility, tests, benchmarks
+and a godoc example). The `native` text backend routes through it.
 
-
-1. **`nlg` core** — package, `Client`/`Persona`/`Task`/`Constraints`, seeded
-   grammar expansion (port + generalise `native`), `narrate`. `native` backend
-   adapts to `nlg`.
-2. **Salience + realizers** — field kind inference and per-kind realization;
+1. `nlg` core: package, `Client`/`Persona`/`Task`/`Constraints`, seeded
+   grammar expansion (port and generalise `native`), `narrate`. `native`
+   backend adapts to `nlg`.
+2. Salience and realizers: field kind inference and per-kind realization;
    verbosity/budget-aware selection. Adds `describe`.
-3. **Event-shape templates** — completion/threshold/arrival/state-change/generic
+3. Event-shape templates: completion/threshold/arrival/state-change/generic
    clause families; richer per-tone pools.
-4. **Constraint-aware expansion** — budget-driven optional constituents; humour
+4. Constraint-aware expansion: budget-driven optional constituents; humour
    gating; sentence budgeting.
-5. **Fallback + more intents** — `WithFallback`, `ErrNeedsModel`; `summarize`,
+5. Fallback and more intents: `WithFallback`, `ErrNeedsModel`; `summarize`,
    then `classify`/`extract`.
-6. **Polish** — docs, examples, custom-grammar option, benchmarks (target
-   sub-microsecond, low/zero alloc).
+6. Polish: docs, examples, opener overrides, benchmarks.
 
 ## Testing
 
-- **Golden** per `(persona, intent, event, data)`.
-- **Property**: output ≤ constraints; never emits `{`/`}` or raw `key: value`;
-  non-empty for valid input; deterministic per seed; varies across events/tones.
-- **Fuzz** realizers with arbitrary data (no panics, bounded output).
-- **Benchmarks** on the hot path.
+- Golden tests per `(persona, intent, event, data)`.
+- Property tests: output within constraints; never emits `{`/`}` or raw
+  `key: value`; non-empty for valid input; deterministic per seed; varies
+  across events/tones.
+- Fuzz the realizers with arbitrary data (no panics, bounded output).
+- Benchmarks on the hot path.
 
 ## Non-goals
 

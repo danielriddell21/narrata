@@ -2,7 +2,7 @@
 
 ## Requirements
 
-* [Go](https://go.dev) (stable — version from `go.mod`)
+* [Go](https://go.dev) (stable, version from `go.mod`)
 * [just](https://github.com/casey/just)
 * [golangci-lint](https://golangci-lint.run/welcome/install/) (for linting)
 * [gremlins](https://github.com/go-gremlins/gremlins) (for mutation testing)
@@ -51,4 +51,4 @@ Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`. No period at the end 
 
 ## Releases
 
-Releases are triggered by pushing a semver tag — maintainers only. A GitHub Actions workflow runs GoReleaser to build the CLI binaries and update the Homebrew tap; it requires the tap app credentials configured as repository secrets. Library consumers pin a version with `go get`.
+Releases are triggered by pushing a semver tag (maintainers only). A GitHub Actions workflow runs GoReleaser to build the CLI binaries and update the Homebrew tap; it requires the tap app credentials configured as repository secrets. Library consumers pin a version with `go get`.

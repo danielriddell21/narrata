@@ -51,8 +51,8 @@ type Task struct {
 	Constraints Constraints
 	// Examples maps an event name to a persona-authored template. When the task's
 	// event matches, the template is used (with {field} placeholders filled from
-	// Data) instead of the grammar — the strongest way to give a persona a
-	// specific, hand-written line for a known event.
+	// Data) instead of the grammar, which lets a persona pin an exact
+	// hand-written line to a known event.
 	Examples map[string]string
 	Seed     uint64 // determinism; 0 derives a seed from the task
 }
