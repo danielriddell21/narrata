@@ -260,12 +260,24 @@ func realizeQuantity(f Field) string {
 	base, unit := unitFor(f.Key)
 	v := formatNumber(f.Value)
 	if unit != "" {
+		// The unit already names the dimension, so a generic key ("size") is
+		// redundant: render "512MB", not "size 512MB".
+		if redundantDims[strings.ToLower(humanizeKey(base))] {
+			return v + unit
+		}
 		return humanizeKey(base) + " " + v + unit
 	}
 	if impliedPercent(f.Key, f.Value) {
 		return humanizeKey(f.Key) + " " + v + "%"
 	}
 	return humanizeKey(f.Key) + " " + v
+}
+
+// redundantDims are generic dimension keys made redundant by a unit: a value
+// keyed "size" with a unit needs no "size" prefix ("512MB", not "size 512MB").
+var redundantDims = map[string]bool{
+	"size": true, "length": true, "amount": true,
+	"value": true, "duration": true, "total": true,
 }
 
 // unitSuffixes maps a key suffix to the unit that replaces it.

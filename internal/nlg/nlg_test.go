@@ -252,6 +252,17 @@ func TestPlaceAdjunctAttachesToClause(t *testing.T) {
 	}
 }
 
+func TestRedundantDimensionKeyDropped(t *testing.T) {
+	c := mustClient(t)
+	// A "size" key with a unit needs no prefix: "512MB", not "size 512MB".
+	res, _ := c.Generate(context.Background(), Task{
+		Event: "backup_uploaded", Data: map[string]any{"size_mb": 512}, Seed: 1,
+	})
+	if !strings.Contains(res.Text, "512MB") || strings.Contains(res.Text, "size 512MB") {
+		t.Fatalf("redundant dimension key not dropped: %q", res.Text)
+	}
+}
+
 func TestNamedPlaceTakesNoArticle(t *testing.T) {
 	c := mustClient(t)
 	// A region reads as a named location ("in eu-west"), not a common one
