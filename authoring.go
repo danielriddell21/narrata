@@ -114,7 +114,7 @@ func slugify(s string, maxWords int) string {
 		"for": true, "a": true, "an": true, "the": true, "of": true,
 		"to": true, "and": true, "with": true, "in": true, "on": true,
 	}
-	var kept []string
+	kept := make([]string, 0, maxWords)
 	for _, f := range fields {
 		if stop[f] {
 			continue

@@ -1,5 +1,5 @@
 // Command monitoring demonstrates Narrata narrating dashboard/service alerts.
-// It uses the default deterministic backend, so it runs with no model file.
+// It uses the default deterministic backend, so it runs with no external files.
 package main
 
 import (

@@ -42,12 +42,3 @@ examples:
     go run ./examples/monitoring
     go run ./examples/game
     go run ./examples/home_automation
-
-# build the experimental cgo backends (require local libs; see backend/README.md)
-[group('build')]
-build-llama:
-    go build -tags llama ./...
-
-[group('build')]
-build-kokoro:
-    go build -tags kokoro ./...

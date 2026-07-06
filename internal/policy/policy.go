@@ -22,7 +22,6 @@ var (
 	mdEmphasis = regexp.MustCompile("[*`#>]+")
 	mdLink     = regexp.MustCompile(`\[([^\]]*)\]\([^)]*\)`)
 	multiSpace = regexp.MustCompile(`[ \t]+`)
-	sentenceRe = regexp.MustCompile(`[^.!?]+[.!?]+|\S[^.!?]*$`)
 )
 
 var profanityRes = func() []*regexp.Regexp {
@@ -115,15 +114,20 @@ func maskProfanity(t string) string {
 }
 
 func limitSentences(t string, limit int) string {
-	matches := sentenceRe.FindAllString(t, -1)
-	if len(matches) <= limit {
-		return t
+	// A terminator only ends a sentence at end-of-string or before whitespace,
+	// so periods inside tokens (e.g. "report.pdf") do not split the text.
+	count := 0
+	for i := 0; i < len(t); i++ {
+		if c := t[i]; c == '.' || c == '!' || c == '?' {
+			if i == len(t)-1 || t[i+1] == ' ' {
+				count++
+				if count >= limit {
+					return strings.TrimSpace(t[:i+1])
+				}
+			}
+		}
 	}
-	kept := make([]string, 0, limit)
-	for _, m := range matches[:min(limit, len(matches))] {
-		kept = append(kept, strings.TrimSpace(m))
-	}
-	return strings.Join(kept, " ")
+	return t
 }
 
 func limitWords(t string, limit int) string {

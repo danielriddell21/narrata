@@ -35,12 +35,6 @@ func TestNewUnknownBackend(t *testing.T) {
 	}
 }
 
-func TestLlamaStubUnavailableByDefault(t *testing.T) {
-	if _, err := New(Options{Backend: "llama.cpp"}); err == nil {
-		t.Fatal("expected llama backend to be unavailable without -tags llama")
-	}
-}
-
 func TestMockDeterministic(t *testing.T) {
 	m := NewMock()
 	p := buildPrompt()

@@ -24,12 +24,6 @@ func TestNewUnknownBackend(t *testing.T) {
 	}
 }
 
-func TestKokoroStubUnavailableByDefault(t *testing.T) {
-	if _, err := New(Options{Backend: "kokoro"}); err == nil {
-		t.Fatal("expected kokoro backend to be unavailable without -tags kokoro")
-	}
-}
-
 func TestMockProducesValidWAV(t *testing.T) {
 	m := NewMock(24000)
 	r, err := m.Speak(context.Background(), "hello world", SpeakOptions{})

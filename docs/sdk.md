@@ -29,10 +29,7 @@ func main() {
 
     engine, err := narrata.New(narrata.Config{
         PersonasPath: "./personas.json",
-        Text: narrata.TextConfig{
-            Backend:   "llama.cpp",
-            ModelPath: "./models/model.gguf",
-        },
+        Text:         narrata.TextConfig{Backend: "native"}, // pure Go, no model
     })
     if err != nil {
         panic(err)
@@ -77,7 +74,6 @@ type Config struct {
 ```go
 type TextConfig struct {
     Backend string
-    ModelPath string
     ContextTokens int
     Temperature float32
     TopP float32
@@ -91,7 +87,6 @@ type TextConfig struct {
 type TTSConfig struct {
     Enabled bool
     Backend string
-    ModelPath string
     DefaultVoice string
     SampleRate int
 }
@@ -260,17 +255,18 @@ func onAlert(engine *narrata.Engine, alert Alert) string {
 }
 ```
 
-## 9. Minimal Interface for Backends
+## 9. Pluggable Backends
 
-The inference backend should be replaceable:
+The default `native` backend generates narration in pure Go at runtime, without
+a model or cgo. The backend stays behind an interface, so `native`, `template`, and
+`mock` are interchangeable, and a host can supply its own generator (e.g. wrapping
+a real model) without changing the integration:
 
 ```go
-type LLM interface {
+type Backend interface {
     Generate(ctx context.Context, prompt string) (string, error)
 }
 ```
-
-This keeps llama.cpp, MLX, template output, or optional cloud adapters replaceable without changing the host integration.
 
 ## 10. Error Handling
 
@@ -284,8 +280,8 @@ case errors.Is(err, narrata.ErrPersonaNotFound):
     // Unknown persona ID.
 case errors.Is(err, narrata.ErrInvalidRequest):
     // Request had nothing to narrate.
-case errors.Is(err, narrata.ErrModelNotLoaded):
-    // A backend failed to initialise.
+case errors.Is(err, narrata.ErrBackendUnavailable):
+    // The configured backend could not be initialised.
 case errors.Is(err, narrata.ErrGenerationTimeout):
     // Generation exceeded the deadline.
 case errors.Is(err, narrata.ErrTTSUnavailable):
@@ -301,7 +297,7 @@ default:
 |-------|---------|
 | `ErrPersonaNotFound` | The requested (or default) persona ID is not registered. |
 | `ErrInvalidRequest` | The request failed validation. |
-| `ErrModelNotLoaded` | A backend failed to initialise or is missing. |
+| `ErrBackendUnavailable` | The configured backend could not be initialised (e.g. an unknown backend name). |
 | `ErrGenerationTimeout` | Generation exceeded the deadline. |
 | `ErrTTSUnavailable` | Speech requested but TTS is disabled or failed to initialise. |
 | `ErrScopeViolation` | An operation outside Narrata's narration scope was attempted. |

@@ -29,45 +29,40 @@ Exit criteria:
 
 ## Phase 1: Local Text Generation
 
-**Status: implemented.** A pure-Go `template` backend generates real text
-locally with no external process; timeout, cancellation, and bounded
-concurrency are handled by the engine; the game example is included. An
-experimental llama.cpp/GGUF backend is available behind the `llama` build tag.
+**Status: implemented.** The in-house `native` backend (`internal/nlg`) generates
+persona-conditioned narration in pure Go at runtime, with no model, cgo or
+external files. Timeout, cancellation, and bounded concurrency are handled by the
+engine, and the game example is included.
 
-Goal: generate real text locally.
+Goal: generate real, persona-shaped text locally, in pure Go.
 
 Deliverables:
 
-- llama.cpp/GGUF backend experiment.
-- Model loading config.
+- Pure-Go narration engine (event shapes, tone, salience).
 - Timeout and cancellation.
 - Basic concurrency handling.
 - Response post-processing.
 - Example game event integration.
-- Template-only fallback backend for constrained systems.
 
 Exit criteria:
 
-- Event input produces useful persona-shaped text locally.
-- No required external process.
-- Works on MacBook/desktop.
+- Event input produces useful persona-shaped text.
+- No model, no cgo, no external process.
+- Runs anywhere Go runs.
 - Backend is replaceable behind an interface.
 
 ## Phase 2: Speech Output
 
-**Status: implemented.** The TTS interface, a deterministic mock backend
+**Status: implemented.** The TTS interface, a deterministic pure-Go mock backend
 (valid WAV), optional audio output, and the home automation example are in
-place; text-only usage is unaffected when TTS is disabled or its model is
-missing. An experimental Kokoro/ONNX backend is available behind the `kokoro`
-build tag.
+place; text-only usage is unaffected when TTS is disabled.
 
 Goal: optional text-to-speech output.
 
 Deliverables:
 
 - TTS interface.
-- Mock TTS backend.
-- Kokoro/ONNX feasibility implementation.
+- Pure-Go mock TTS backend (valid WAV).
 - Audio result as bytes.
 - Example home automation announcement.
 
@@ -126,6 +121,11 @@ Exit criteria:
 
 ## Phase 5: Post-MVP Event Awareness
 
+**Status: implemented.** `EventPolicy` is acted on by the engine
+(`internal/eventpolicy`): importance scales the word budget, urgency forces a
+single terse sentence, per-persona intensity maps to delivery energy, and a
+cooldown returns a silent result for repeat events when silence is allowed.
+
 Goal: allow Narrata to decide how to render an event within host-defined boundaries.
 
 Deliverables:
@@ -152,17 +152,16 @@ Exit criteria:
 6. Default personas.
 7. Monitoring alert example.
 8. Game example.
-9. llama.cpp/GGUF backend.
-10. TTS interface.
-11. Kokoro experiment.
-12. Event policy groundwork.
+9. Pure-Go `native` narration engine (`internal/nlg`).
+10. TTS interface + mock WAV.
+11. Event policy groundwork.
 
 ## Suggested Repo Milestones
 
 ### v0.1.0
 
 - Text-only embedded runtime.
-- Mock backend and one real local backend.
+- Pure-Go `native` narration engine (no model, no cgo).
 - Default personas.
 - Go examples.
 - Explicit non-goals documented.
@@ -181,7 +180,7 @@ Exit criteria:
 
 ### v0.4.0
 
-- Multiple model backends.
+- Richer authored grammar/phrase variety.
 - Streaming text.
 - Improved concurrency.
 

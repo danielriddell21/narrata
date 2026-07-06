@@ -1,97 +1,49 @@
-# Narrata Research Notes
+# Narrata Design Rationale
 
-## Local Text Inference
+Why Narrata generates narration in house, in pure Go, at runtime, with no
+model, no cgo and no external files.
 
-Narrata should target local inference through a model format and runtime that can be embedded into host systems.
+## The decision
 
-Recommended direction:
+Narration in Narrata's domain is short and structured: a line or two derived
+from a known event plus a small data payload, shaped by a persona. An authored,
+persona-conditioned grammar with salience selection and constraint solving
+covers that domain without any learned weights. So the core generates text
+procedurally, in Go, and ships as a single self-contained binary that starts
+fast and sends no data anywhere.
 
-- GGUF model files.
-- llama.cpp-backed runtime.
-- Go binding or cgo integration.
+## Models we evaluated (and why not in the core)
 
-Notes:
+| Option | Verdict |
+|--------|---------|
+| llama.cpp / GGUF (cgo) | Great quality, but needs a C toolchain, a native lib, and a multi-GB model file. Too heavy for short structured narration, and breaks "self-contained, pure Go". |
+| [born-ml/born](https://github.com/born-ml/born) (pure-Go GGUF) | Actually cgo-free, but pulls a large dependency tree (WebGPU stack, tokenizers). Pure Go, not lightweight. |
+| Kokoro / ONNX (TTS) | Real voice, but requires ONNX Runtime and a model export. Same weight/toolchain cost. |
+| Ollama sidecar | A separate service beside the app, which is the opposite of embedded. |
 
-- llama.cpp is designed for local LLM inference with minimal setup and strong performance across hardware.
-- GGUF is designed for GGML-style executors and efficient model loading/saving for inference.
-- There are Go binding projects that expose llama.cpp-style local inference to Go applications, but backend choice should be tested before committing.
+Each of these reintroduces what Narrata set out to avoid (models, native code,
+external files, startup latency) for output that doesn't need them, so none
+made it into the core.
 
-## Text-to-Speech
+## What we build instead
 
-Recommended direction:
+For text, the pure-Go `native` engine in `internal/nlg`: event-shape grammar,
+tone-conditioned clauses, salience, constraint-aware expansion, deterministic
+output. For TTS, a pure-Go `mock` WAV backend for now; a real pure-Go
+synthesiser can follow under the same no-model rule.
 
-- Keep TTS optional.
-- Define a stable `TTSBackend` interface early.
-- Use mock TTS first.
-- Evaluate Kokoro/Kokoro ONNX for a lightweight local implementation.
+## The escape hatch
 
-Notes:
+Open-ended tasks like free-form Q&A or novel prose do need a model. For those,
+`nlg.WithFallback` accepts any `Generate(ctx, prompt) (string, error)` backend,
+so a host can bring its own model without it becoming a core dependency. If a
+lean pure-Go model path is ever wanted, the primitives to borrow (GGUF dequant,
+RMSNorm/RoPE/SwiGLU, KV-cache, samplers) are well understood, but that stays
+opt-in.
 
-- Kokoro is an open-weight 82M parameter TTS model.
-- ONNX packaging may be attractive for embedding, depending on Go runtime support and deployment constraints.
+## Limits
 
-## Why Not Ollama First?
-
-Ollama is useful for prototyping, but Narrata is intended to be embedded directly into host systems. Depending on an Ollama sidecar would make Narrata feel like a separate service rather than baked-in runtime.
-
-Possible compromise:
-
-- Allow an Ollama backend for development only.
-- Keep the production embedded path focused on direct local inference.
-
-## Product Differentiation
-
-Narrata should not position itself as a generic local AI runtime. That market is crowded.
-
-The stronger position is:
-
-> An embedded narration engine that turns structured application data into human text and speech.
-
-Most local AI tooling focuses on chat, agents, or model hosting. Narrata should focus on making software explain what is happening in real time.
-
-## Scope Guardrails
-
-The core package should avoid these concepts:
-
-- Assistant.
-- Chat session.
-- Memory.
-- Tool calling.
-- Planner.
-- Agent.
-- RAG.
-- Vector database.
-- Workflow engine.
-- Scheduler.
-
-Allowed concepts:
-
-- Event.
-- Persona.
-- Narration.
-- Text generation.
-- Speech generation.
-- Output policy.
-- Event policy.
-
-## Key Technical Risks
-
-| Risk | Mitigation |
-|---|---|
-| Go LLM bindings are immature or unstable | Keep backend interface abstract; prototype more than one option. |
-| TTS adds deployment complexity | Make TTS optional and second-phase. |
-| Model startup time is too slow | Long-lived engine instance; preload models. |
-| Output is too verbose | Strong persona constraints and post-processing. |
-| Host passes too much data | Context builder should compact and filter input. |
-| Embedded binary gets too large | Let host package models separately. |
-| Persona consistency is weak | Add examples/few-shot support before fine-tuning. |
-| Scope creeps into assistant framework | Keep non-goals in spec, README, and implementation review checklist. |
-
-## Reference Links
-
-- llama.cpp GitHub: https://github.com/ggml-org/llama.cpp
-- Hugging Face GGUF docs: https://huggingface.co/docs/hub/en/gguf
-- Kokoro-82M Hugging Face: https://huggingface.co/hexgrad/Kokoro-82M
-- Kokoro ONNX: https://huggingface.co/onnx-community/Kokoro-82M-v1.0-ONNX
-- seed-hypermedia/llama-go: https://github.com/seed-hypermedia/llama-go
-- hybridgroup/yzma: https://github.com/hybridgroup/yzma
+Procedural generation restates and dramatizes host data in character. It does
+not reason, understand arbitrary free text, or produce novel prose. That
+matches Narrata's scope (narration, not chat). Breadth comes from authored
+variety, not scale.

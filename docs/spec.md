@@ -2,7 +2,7 @@
 
 ## 1. Summary
 
-Narrata is an embedded local narration runtime for Go applications. It lets a host system turn structured data, events, state changes, metrics, or text into short natural-language output, with optional local text-to-speech.
+Narrata is an embedded narration runtime for Go applications. It lets a host system turn structured data, events, state changes, metrics, or text into short natural-language output, with optional speech. Everything runs at runtime in pure Go: no models, no cgo, no external files, and no dependencies beyond the standard library.
 
 Narrata is not a separate assistant application. It is a library/runtime baked directly into the systems that use it, such as games, home automation systems, dashboards, monitoring tools, robotics projects, local developer tools, and simulations.
 
@@ -29,21 +29,21 @@ Nothing else belongs in the core mission.
 
 **Narrata: an embedded local narration engine for Go systems.**
 
-Applications use Narrata to explain their state, events, and actions to humans through text and speech. The distinctive value is not simply local AI inference; it is turning application data into human narration in real time.
+Applications use Narrata to explain their state, events, and actions to humans through text and speech. The distinctive value is turning application data into in-character narration in real time, generated procedurally in Go without a model or an inference service.
 
-Narrata allows developers to add character, narration, spoken alerts, contextual commentary, and data-driven dialogue directly inside their software without sending data to an external AI service.
+Narrata allows developers to add character, narration, spoken alerts, contextual commentary, and data-driven dialogue directly inside their software, with nothing to download and no data leaving the process.
 
 ## 4. Goals
 
 - Provide a Go-first embedded SDK.
-- Run locally on desktop/MacBook-class hardware first.
-- Keep the runtime lightweight enough to later target smaller devices.
+- Stay pure Go: no models, no cgo, no external files, stdlib-only.
+- Generate narration procedurally at runtime, so the binary is self-contained, starts fast and runs anywhere Go runs.
 - Accept data-first inputs, especially JSON/event payloads.
 - Generate short text output quickly.
-- Optionally generate speech output locally.
+- Optionally generate speech output.
 - Support editable and generated personas through `personas.json` or a personas directory.
 - Allow host systems to control when Narrata speaks and what data it sees.
-- Make model backends replaceable.
+- Keep backends behind an interface (for tests and optional extensions).
 - Keep the API small: input -> persona -> generate -> output.
 
 ## 5. Non-Goals
@@ -66,27 +66,27 @@ Narrata should not plan, browse, remember, call tools, hold conversations, or au
 
 ## 6. Design Principles
 
-1. **Embedded-first** — Narrata is a library inside a host system, not an app beside it.
-2. **Local-first** — No cloud dependency in the core path.
-3. **Persona-driven** — Tone, style, voice, and rules come from personas.
-4. **Event-driven** — The host provides events and state; Narrata narrates them.
-5. **Model-agnostic** — LLM and TTS backends sit behind interfaces.
-6. **Low-latency** — Outputs should be short and suitable for real-time use.
-7. **No agent behaviour** — No memory, tools, planning, autonomous loops, or chatbot scope creep.
-8. **Host-controlled** — The host decides what is passed in, when generation happens, and where output goes.
+1. Embedded-first. Narrata is a library inside a host system, not an app beside it.
+2. Local-first. No cloud dependency in the core path.
+3. Persona-driven. Tone, style, voice, and rules come from personas.
+4. Event-driven. The host provides events and state; Narrata narrates them.
+5. In-house and pure Go. Narration is generated procedurally at runtime with no models, cgo or dependencies.
+6. Low latency. Outputs should be short and suitable for real-time use.
+7. No agent behaviour. No memory, tools, planning, autonomous loops, or chatbot scope creep.
+8. Host-controlled. The host decides what is passed in, when generation happens, and where output goes.
 
 ## 7. Target Users
 
 ### Primary
 
-- Go developers embedding local AI into applications.
+- Go developers embedding local narration into applications.
 - Indie game developers wanting dynamic NPC or narrator lines.
 - Home automation developers wanting local spoken alerts.
 - Dashboard and monitoring tool builders wanting contextual summaries.
 
 ### Secondary
 
-- Hobbyists building local AI systems.
+- Hobbyists building local narration into their tools.
 - Robotics/simulation developers.
 - Privacy-conscious users who do not want event data sent to cloud AI APIs.
 
@@ -112,7 +112,7 @@ Output:
 
 ```json
 {
-  "text": "Ari staggers as the Bone Dragon closes in. This is not the time for optimism.",
+  "text": "Ari is fading fast — Bone Dragon!",
   "audio": null
 }
 ```
@@ -137,7 +137,7 @@ Output:
 
 ```json
 {
-  "text": "The washing machine has finished in the utility room.",
+  "text": "The washing machine has finished — in the utility room.",
   "audio_format": "wav",
   "audio": "<bytes>"
 }
@@ -163,7 +163,7 @@ Output:
 
 ```json
 {
-  "text": "Payments API is moving like it has chosen a career in archaeology. Latency is near one second."
+  "text": "Payments-api has degraded — cpu 96, latency ms 950."
 }
 ```
 
@@ -221,15 +221,8 @@ Narrata should feel like an embedded renderer for narration, not a chatbot wrapp
 ```go
 engine, err := narrata.New(narrata.Config{
     PersonasPath: "./personas.json",
-    Text: narrata.TextConfig{
-        Backend:   "llama.cpp",
-        ModelPath: "./models/text.gguf",
-    },
-    TTS: narrata.TTSConfig{
-        Enabled:   true,
-        Backend:   "kokoro",
-        ModelPath: "./models/kokoro.onnx",
-    },
+    Text:         narrata.TextConfig{Backend: "native"}, // pure Go, no model
+    TTS:          narrata.TTSConfig{Enabled: true, Backend: "mock"},
 })
 
 result, err := engine.Generate(ctx, narrata.Request{
@@ -263,36 +256,35 @@ fmt.Println(result.Text)
 - Persona loading from `personas.json` and/or `personas/*.json`.
 - Default personas bundled with the package.
 - JSON/event input.
-- Text generation through local model backend.
-- Simple prompt builder.
-- Model backend interface.
+- Text generation through the in-house, pure-Go narration engine.
+- Persona-conditioned generation (event shapes, tone, salience).
+- Pluggable backend interface (for tests and optional extensions).
 - Deterministic response constraints: max words, max sentences, style, safety rules.
-- Optional TTS interface, even if first implementation is behind a feature flag.
-- Clear errors for missing models, invalid personas, and malformed input.
+- Optional TTS interface.
+- Clear errors for invalid personas and malformed input.
 - Strict non-goals documented in code comments and README.
 
 ### Should Have
 
 - Persona creation helper.
 - Response caching for repeated event patterns.
-- Template-only fallback when model is unavailable.
+- Richer authored grammar/phrase variety.
 - Basic benchmark command for development only.
 - Examples for games, home automation, and monitoring.
 
 ### Could Have
 
 - Audio streaming.
-- Multiple model backends.
 - Per-persona voice mapping.
+- Host-supplied custom grammar/phrase packs.
 - Hot reload for `personas.json`.
 - WASM or mobile support later.
 
 ## 14. Constraints
 
-- Desktop/MacBook first.
+- Runs anywhere Go runs; no platform-specific requirements.
 - Local-only by default.
-- No cloud dependency in the core path.
-- Model files are provided by the host application or installed as assets.
+- No cloud dependency, no cgo, and no model files anywhere in the path.
 - Narrata should avoid long-running global state where possible.
 - Thread safety matters for host systems with concurrent event streams.
 - No conversation state in MVP.

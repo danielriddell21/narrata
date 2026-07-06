@@ -34,8 +34,8 @@ narrata gen "pirate captain for server alerts" -o personas/pirate.json
 
 ### `generate`
 
-Render a single event to narration text using the deterministic backends (no
-model file required).
+Render a single event to narration text using the deterministic backends
+(pure Go, no setup).
 
 | Flag | Description |
 |------|-------------|
@@ -44,7 +44,7 @@ model file required).
 | `--data` | Event data as a JSON object. |
 | `--personas` | Path to a `personas.json` file. |
 | `--dir` | Path to a `personas/` directory. |
-| `--backend` | Text backend: `mock` or `template` (default `template`). |
+| `--backend` | Text backend: `mock`, `template`, or `native` (default `native`). |
 | `--max-words` | Override the persona word limit. |
 | `--instruction` | Optional one-off steering note. |
 

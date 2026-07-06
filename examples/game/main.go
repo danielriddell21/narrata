@@ -1,7 +1,6 @@
 // Command game demonstrates Narrata producing short, persona-shaped narration
-// for game events. It uses the template backend so it runs locally with no
-// model file; switch Backend to "llama.cpp" (built with -tags llama) for real
-// local inference.
+// for game events. It uses the pure-Go native backend, so it runs locally with
+// no external files.
 package main
 
 import (
@@ -22,7 +21,7 @@ func main() {
 	ctx := context.Background()
 
 	engine, err := narrata.New(narrata.Config{
-		Text: narrata.TextConfig{Backend: "template"},
+		Text: narrata.TextConfig{Backend: "native"},
 	})
 	if err != nil {
 		log.Fatal(err)

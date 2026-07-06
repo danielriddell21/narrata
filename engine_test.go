@@ -198,3 +198,61 @@ func TestDefaultTimeoutApplied(t *testing.T) {
 		t.Fatalf("Generate: %v", err)
 	}
 }
+
+func TestEventPolicyCooldownSilencesRepeat(t *testing.T) {
+	e := newTestEngine(t, Config{})
+	req := Request{
+		PersonaID:   "narrator",
+		Event:       "tick",
+		Data:        map[string]any{"n": 1},
+		EventPolicy: EventPolicy{Cooldown: time.Minute, AllowSilence: true},
+	}
+
+	first, err := e.Generate(context.Background(), req)
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	if first.Silent || first.Text == "" {
+		t.Fatalf("first render should not be silent: %+v", first)
+	}
+
+	second, err := e.Generate(context.Background(), req)
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	if !second.Silent || second.Text != "" {
+		t.Fatalf("second render within cooldown should be silent: %+v", second)
+	}
+
+	// A different event is not on cooldown.
+	other := req
+	other.Event = "tock"
+	if res, _ := e.Generate(context.Background(), other); res.Silent {
+		t.Fatal("unrelated event wrongly silenced")
+	}
+
+	// Without AllowSilence, cooldown never suppresses.
+	loud := req
+	loud.EventPolicy.AllowSilence = false
+	if res, _ := e.Generate(context.Background(), loud); res.Silent {
+		t.Fatal("silenced despite AllowSilence=false")
+	}
+}
+
+func TestStructuredNativePathUsesFullStyle(t *testing.T) {
+	e := newTestEngine(t, Config{Text: TextConfig{Backend: "native"}})
+	res, err := e.Generate(context.Background(), Request{
+		PersonaID: "dungeon_master", // dramatic, high energy
+		Event:     "reactor_critical",
+		Data:      map[string]any{"reactor": "core-1"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasSuffix(res.Text, "!") {
+		t.Fatalf("expected dramatic exclamation via structured path, got %q", res.Text)
+	}
+	if !strings.HasPrefix(res.Text, "Core-1") {
+		t.Fatalf("expected subject substitution, got %q", res.Text)
+	}
+}

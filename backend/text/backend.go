@@ -43,11 +43,9 @@ type Result struct {
 // Options configures backend construction. It is populated by the engine from
 // the host's text configuration.
 type Options struct {
-	// Backend names the implementation: "mock", "template", or "llama.cpp".
+	// Backend names the implementation: "mock", "template", or "native".
 	Backend string
-	// ModelPath is the path to a model file (used by "llama.cpp").
-	ModelPath string
-	// ContextTokens is the model context window. Zero uses the backend default.
+	// ContextTokens bounds the generation context. Zero uses the backend default.
 	ContextTokens int
 	// Temperature controls sampling randomness. Zero uses the backend default.
 	Temperature float32
@@ -58,15 +56,15 @@ type Options struct {
 }
 
 // New constructs a backend by name. An empty name defaults to the deterministic
-// mock backend so apps can run without a model file.
+// mock backend.
 func New(o Options) (Backend, error) {
 	switch o.Backend {
 	case "", "mock":
 		return NewMock(), nil
 	case "template":
 		return NewTemplate(), nil
-	case "llama.cpp", "llama":
-		return newLlama(o)
+	case "native", "grammar":
+		return NewNative(), nil
 	default:
 		return nil, fmt.Errorf("text: unknown backend %q", o.Backend)
 	}

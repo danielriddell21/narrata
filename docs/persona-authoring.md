@@ -34,18 +34,19 @@ default by reusing its `id`.
 
 Tips:
 
-- **Pick a clear `id`.** It is how hosts select the persona per request; keep it
+- Pick a clear `id`. It is how hosts select the persona per request, so keep it
   stable and lowercase with underscores.
-- **Write rules as instructions, not prose.** Short imperative lines work best:
-  "Lead with the key fact", "Keep it under 20 words".
-- **Set constraints to match the surface.** A spoken home announcement wants
-  `max_sentences: 1`; a dashboard summary can use two.
-- **Keep humour honest.** When `humour` is on, add a rule like "never obscure the
-  key information" so the joke never costs clarity.
-- **Don't leak structure.** Add "Do not mention raw JSON" so field names and
-  values are narrated, not dumped.
-- **Reserve `event_policy` for later.** It is parsed and validated now but only
-  acted on once event awareness lands (roadmap Phase 5).
+- Write rules as instructions rather than prose. Short imperative lines work
+  best: "Lead with the key fact", "Keep it under 20 words".
+- Set constraints to match the surface. A spoken home announcement wants
+  `max_sentences: 1`, while a dashboard summary can use two.
+- If `humour` is on, add a rule like "never obscure the key information" so the
+  joke never costs clarity.
+- Add "Do not mention raw JSON" so field names and values are narrated, not
+  dumped.
+- `event_policy` paces and shapes output. Its `default_importance`,
+  `intensity`, `cooldown_seconds`, and `allow_silence` fields adjust length,
+  delivery energy, and cooldown silence, and a request may override them.
 
 ## Scaffold one from a description
 
