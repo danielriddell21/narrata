@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/danielriddell21/narrata/backend/text"
 	"github.com/danielriddell21/narrata/backend/tts"
+	"github.com/danielriddell21/narrata/internal/eventpolicy"
 	"github.com/danielriddell21/narrata/internal/policy"
 	"github.com/danielriddell21/narrata/internal/prompt"
 	"github.com/danielriddell21/narrata/internal/validate"
@@ -23,6 +25,9 @@ type Engine struct {
 	sem      chan struct{}
 	defVoice string
 	sampleRt int
+
+	mu         sync.Mutex
+	lastRender map[string]time.Time // persona+event -> last non-silent render
 }
 
 // New constructs an Engine from cfg. It always loads the bundled default
@@ -63,11 +68,12 @@ func New(cfg Config) (*Engine, error) {
 	}
 
 	e := &Engine{
-		cfg:      cfg,
-		personas: reg,
-		text:     tb,
-		defVoice: cfg.TTS.DefaultVoice,
-		sampleRt: cfg.TTS.SampleRate,
+		cfg:        cfg,
+		personas:   reg,
+		text:       tb,
+		defVoice:   cfg.TTS.DefaultVoice,
+		sampleRt:   cfg.TTS.SampleRate,
+		lastRender: make(map[string]time.Time),
 	}
 	if cfg.MaxConcurrent > 0 {
 		e.sem = make(chan struct{}, cfg.MaxConcurrent)
@@ -156,6 +162,19 @@ func (e *Engine) Generate(ctx context.Context, req Request) (Result, error) {
 	start := time.Now()
 	eff := effectiveConstraints(persona, req)
 
+	// Event policy can suppress output (cooldown) or reshape it (importance,
+	// urgency, intensity) within the resolved constraints.
+	decision := e.decideEvent(persona, req, eff)
+	if decision.Silent {
+		return Result{PersonaID: persona.ID, Silent: true, Duration: time.Since(start)}, nil
+	}
+	eff.maxWords = decision.MaxWords
+	eff.maxSentences = decision.MaxSentences
+	energy := persona.Style.Energy
+	if decision.Energy != "" {
+		energy = decision.Energy
+	}
+
 	opts := text.GenerateOptions{
 		Temperature:   e.cfg.Text.Temperature,
 		TopP:          e.cfg.Text.TopP,
@@ -173,7 +192,7 @@ func (e *Engine) Generate(ctx context.Context, req Request) (Result, error) {
 			Instruction: req.Instruction,
 			Style: text.Style{
 				Tone:      persona.Style.Tone,
-				Energy:    persona.Style.Energy,
+				Energy:    energy,
 				Humour:    persona.Style.Humour,
 				Verbosity: persona.Style.Verbosity,
 			},
@@ -188,7 +207,7 @@ func (e *Engine) Generate(ctx context.Context, req Request) (Result, error) {
 			PersonaName:   persona.Name,
 			Description:   persona.Description,
 			Tone:          persona.Style.Tone,
-			Energy:        persona.Style.Energy,
+			Energy:        energy,
 			Humour:        persona.Style.Humour,
 			Verbosity:     persona.Style.Verbosity,
 			Rules:         persona.Rules,
@@ -237,8 +256,55 @@ func (e *Engine) Generate(ctx context.Context, req Request) (Result, error) {
 		res.Spoken = len(audio.Audio) > 0
 	}
 
+	if !processed.Silent {
+		e.recordRender(persona.ID, req.Event, start)
+	}
+
 	res.Duration = time.Since(start)
 	return res, nil
+}
+
+// decideEvent resolves the event-policy inputs from the persona defaults and the
+// request override, then computes the rendering decision.
+func (e *Engine) decideEvent(persona Persona, req Request, eff effective) eventpolicy.Decision {
+	importance := persona.EventPolicy.DefaultImportance
+	if req.EventPolicy.Importance != "" {
+		importance = req.EventPolicy.Importance
+	}
+	cooldown := req.EventPolicy.Cooldown
+	if cooldown == 0 && persona.EventPolicy.CooldownSeconds > 0 {
+		cooldown = time.Duration(persona.EventPolicy.CooldownSeconds) * time.Second
+	}
+	since, has := e.sinceLast(persona.ID, req.Event)
+	return eventpolicy.Decide(eventpolicy.Inputs{
+		Importance:   importance,
+		Urgency:      req.EventPolicy.Urgency,
+		Intensity:    persona.EventPolicy.Intensity,
+		AllowSilence: eff.allowSilence,
+		Cooldown:     cooldown,
+		SinceLast:    since,
+		HasLast:      has,
+		MaxWords:     eff.maxWords,
+		MaxSentences: eff.maxSentences,
+	})
+}
+
+func renderKey(personaID, event string) string { return personaID + "\x00" + event }
+
+func (e *Engine) sinceLast(personaID, event string) (time.Duration, bool) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	last, ok := e.lastRender[renderKey(personaID, event)]
+	if !ok {
+		return 0, false
+	}
+	return time.Since(last), true
+}
+
+func (e *Engine) recordRender(personaID, event string, at time.Time) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	e.lastRender[renderKey(personaID, event)] = at
 }
 
 // personaExamples maps a persona's authored examples to event -> template.

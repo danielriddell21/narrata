@@ -121,6 +121,11 @@ Exit criteria:
 
 ## Phase 5: Post-MVP Event Awareness
 
+**Status: implemented.** `EventPolicy` is acted on by the engine
+(`internal/eventpolicy`): importance scales the word budget, urgency forces a
+single terse sentence, per-persona intensity maps to delivery energy, and a
+cooldown returns a silent result for repeat events when silence is allowed.
+
 Goal: allow Narrata to decide how to render an event within host-defined boundaries.
 
 Deliverables:

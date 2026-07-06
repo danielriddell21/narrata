@@ -74,7 +74,9 @@ This makes personas feel like host assets and allows games/apps to ship custom v
 
 ## 5. Event Policy Field
 
-Event policy is post-MVP but should be included in the schema shape early.
+Event policy shapes how events render: `default_importance` scales output
+length, `intensity` sets delivery energy, `cooldown_seconds` suppresses repeat
+output when `allow_silence` is set. A request's `EventPolicy` overrides these.
 
 ```json
 {

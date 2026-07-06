@@ -44,8 +44,9 @@ Tips:
   key information" so the joke never costs clarity.
 - **Don't leak structure.** Add "Do not mention raw JSON" so field names and
   values are narrated, not dumped.
-- **Reserve `event_policy` for later.** It is parsed and validated now but only
-  acted on once event awareness lands (roadmap Phase 5).
+- **Use `event_policy` to pace and shape output.** Its `default_importance`,
+  `intensity`, `cooldown_seconds`, and `allow_silence` fields adjust length,
+  delivery energy, and cooldown silence; a request may override them.
 
 ## Scaffold one from a description
 

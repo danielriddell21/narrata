@@ -71,8 +71,9 @@ type Request struct {
 	Output OutputMode
 	// Constraints override persona constraints for this request.
 	Constraints Constraints
-	// EventPolicy carries rendering preferences. For MVP it is parsed and
-	// validated but not fully acted upon (see roadmap Phase 5).
+	// EventPolicy shapes rendering for this event: importance and urgency adjust
+	// the length and terseness, and a cooldown can suppress repeat output when
+	// AllowSilence is set.
 	EventPolicy EventPolicy
 }
 

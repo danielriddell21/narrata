@@ -17,7 +17,8 @@ type Persona struct {
 	Rules []string `json:"rules"`
 	// Constraints are the output limits applied unless a [Request] overrides them.
 	Constraints PersonaConstraints `json:"constraints"`
-	// EventPolicy holds reserved rendering preferences (see roadmap Phase 5).
+	// EventPolicy sets the persona's default rendering preferences (baseline
+	// importance, intensity, and cooldown), which a [Request] may override.
 	EventPolicy PersonaEventPolicy `json:"event_policy"`
 	// Examples are optional few-shot pairs for stronger consistency.
 	Examples []Example `json:"examples,omitempty"`
@@ -58,8 +59,9 @@ type PersonaConstraints struct {
 	AllowMarkdown bool `json:"allow_markdown"`
 }
 
-// PersonaEventPolicy is the schema-level event policy. It is reserved for
-// post-MVP rendering decisions and remains rendering policy, not autonomy.
+// PersonaEventPolicy is the schema-level event policy: the persona's default
+// rendering preferences. It is rendering policy, not autonomy — Narrata never
+// schedules or acts on it.
 type PersonaEventPolicy struct {
 	// DefaultImportance is the baseline importance for the persona's events.
 	DefaultImportance string `json:"default_importance"`
