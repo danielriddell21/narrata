@@ -220,7 +220,7 @@ Examples:
 
 - `ErrPersonaNotFound`
 - `ErrInvalidRequest`
-- `ErrModelNotLoaded`
+- `ErrBackendUnavailable`
 - `ErrGenerationTimeout`
 - `ErrTTSUnavailable`
 - `ErrScopeViolation`

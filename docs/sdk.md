@@ -74,7 +74,6 @@ type Config struct {
 ```go
 type TextConfig struct {
     Backend string
-    ModelPath string
     ContextTokens int
     Temperature float32
     TopP float32
@@ -88,7 +87,6 @@ type TextConfig struct {
 type TTSConfig struct {
     Enabled bool
     Backend string
-    ModelPath string
     DefaultVoice string
     SampleRate int
 }
@@ -282,8 +280,8 @@ case errors.Is(err, narrata.ErrPersonaNotFound):
     // Unknown persona ID.
 case errors.Is(err, narrata.ErrInvalidRequest):
     // Request had nothing to narrate.
-case errors.Is(err, narrata.ErrModelNotLoaded):
-    // A backend failed to initialise.
+case errors.Is(err, narrata.ErrBackendUnavailable):
+    // The configured backend could not be initialised.
 case errors.Is(err, narrata.ErrGenerationTimeout):
     // Generation exceeded the deadline.
 case errors.Is(err, narrata.ErrTTSUnavailable):
@@ -299,7 +297,7 @@ default:
 |-------|---------|
 | `ErrPersonaNotFound` | The requested (or default) persona ID is not registered. |
 | `ErrInvalidRequest` | The request failed validation. |
-| `ErrModelNotLoaded` | A backend failed to initialise or is missing. |
+| `ErrBackendUnavailable` | The configured backend could not be initialised (e.g. an unknown backend name). |
 | `ErrGenerationTimeout` | Generation exceeded the deadline. |
 | `ErrTTSUnavailable` | Speech requested but TTS is disabled or failed to initialise. |
 | `ErrScopeViolation` | An operation outside Narrata's narration scope was attempted. |

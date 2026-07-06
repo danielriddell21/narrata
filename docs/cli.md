@@ -34,8 +34,8 @@ narrata gen "pirate captain for server alerts" -o personas/pirate.json
 
 ### `generate`
 
-Render a single event to narration text using the deterministic backends (no
-model file required).
+Render a single event to narration text using the deterministic backends
+(pure Go, no setup).
 
 | Flag | Description |
 |------|-------------|
