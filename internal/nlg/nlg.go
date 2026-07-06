@@ -256,7 +256,14 @@ func (c *Client) narrate(t Task, style Style, cons Constraints) string {
 		return terminate(compose(c.openerPool(style), humanizeEvent(t.Event), realizeAll(fields), r, cons), style)
 	}
 
-	subject, rest := subjectPhrase(noun, fields)
+	subject, rest, matched := subjectPhrase(noun, fields)
+	// For a generic verb action with no matching noun field, a name reads as the
+	// actor ("goal_scored" + team Rovers -> "Rovers scored").
+	if sh == shapeAction && !matched {
+		if name, r2, ok := takeFirstName(fields); ok {
+			subject, rest = name, r2
+		}
+	}
 	rest = salient(rest, maxFields(style, cons))
 
 	var clause string

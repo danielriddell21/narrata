@@ -75,20 +75,35 @@ func isVerbLike(w string) bool {
 
 // subjectPhrase resolves the subject: if a data field's key matches the subject
 // noun, its value becomes a proper subject (no article) and is removed from the
-// remaining fields; otherwise the noun is used with a definite article.
-func subjectPhrase(noun string, fields []Field) (string, []Field) {
+// remaining fields; otherwise the noun is used with a definite article. matched
+// reports whether a field supplied the subject.
+func subjectPhrase(noun string, fields []Field) (subject string, rest []Field, matched bool) {
 	if noun == "" {
-		return "", fields
+		return "", fields, false
 	}
 	for i, f := range fields {
 		if strings.EqualFold(humanizeKey(f.Key), noun) {
-			rest := make([]Field, 0, len(fields)-1)
-			rest = append(rest, fields[:i]...)
-			rest = append(rest, fields[i+1:]...)
-			return valueString(f.Value), rest
+			return valueString(f.Value), removeAt(fields, i), true
 		}
 	}
-	return "the " + noun, fields
+	return "the " + noun, fields, false
+}
+
+// takeFirstName pulls the first name field as a proper subject, if any.
+func takeFirstName(fields []Field) (subject string, rest []Field, ok bool) {
+	for i, f := range fields {
+		if f.Kind == KindName {
+			return valueString(f.Value), removeAt(fields, i), true
+		}
+	}
+	return "", fields, false
+}
+
+func removeAt(fields []Field, i int) []Field {
+	rest := make([]Field, 0, len(fields)-1)
+	rest = append(rest, fields[:i]...)
+	rest = append(rest, fields[i+1:]...)
+	return rest
 }
 
 // bucket groups tones into phrasing families so clauses read differently per

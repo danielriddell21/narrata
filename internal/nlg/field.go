@@ -105,7 +105,9 @@ func inferKind(key string, v any) Kind {
 		return KindPlace
 	case containsAny(lk, "time", "date", "when", "clock"):
 		return KindTime
-	case containsAny(lk, "name", "player", "user", "enemy", "who", "actor", "service"):
+	case containsAny(lk, "name", "player", "user", "enemy", "who", "actor", "service",
+		"team", "host", "node", "device", "app", "job", "channel", "sensor",
+		"bot", "npc", "unit", "character", "agent", "worker"):
 		return KindName
 	default:
 		return KindOther
@@ -126,6 +128,26 @@ func score(k Kind) int {
 	}
 }
 
+// fieldScore ranks a field's narration-worthiness, boosting notable quantities:
+// values with units, implied percentages, and percentages near their limit read
+// as the interesting fact.
+func fieldScore(f Field) int {
+	s := score(f.Kind)
+	if f.Kind != KindQuantity {
+		return s
+	}
+	if _, unit := unitFor(f.Key); unit != "" {
+		s++
+	}
+	if impliedPercent(f.Key, f.Value) {
+		s++
+		if v, ok := toFloat(f.Value); ok && (v >= 90 || v <= 10) {
+			s++ // near a limit — likely why the event fired
+		}
+	}
+	return s
+}
+
 // salient returns up to max fields, highest score first, stable within a score.
 func salient(fields []Field, max int) []Field {
 	if max <= 0 || len(fields) <= max {
@@ -136,7 +158,7 @@ func salient(fields []Field, max int) []Field {
 		idx[i] = i
 	}
 	sort.SliceStable(idx, func(a, b int) bool {
-		return score(fields[idx[a]].Kind) > score(fields[idx[b]].Kind)
+		return fieldScore(fields[idx[a]]) > fieldScore(fields[idx[b]])
 	})
 	kept := make([]Field, 0, max)
 	for _, i := range idx[:max] {

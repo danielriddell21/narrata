@@ -195,6 +195,28 @@ func TestValueWithPeriodNotSplit(t *testing.T) {
 	}
 }
 
+func TestActionUsesNameActor(t *testing.T) {
+	c := mustClient(t)
+	res, _ := c.Generate(context.Background(), Task{
+		Event: "goal_scored", Data: map[string]any{"team": "Rovers", "minute": 89},
+	})
+	if !strings.HasPrefix(res.Text, "Rovers scored") {
+		t.Fatalf("name actor not used: %q", res.Text)
+	}
+}
+
+func TestSalienceSurfacesNotableQuantity(t *testing.T) {
+	c := mustClient(t)
+	// One field slot: a near-limit percentage should win over a plain number.
+	res, _ := c.Generate(context.Background(), Task{
+		Event: "status_report", Data: map[string]any{"cpu": 96, "queue": 3},
+		Style: &Style{Verbosity: "short"},
+	})
+	if !strings.Contains(res.Text, "cpu 96%") {
+		t.Fatalf("notable field not surfaced: %q", res.Text)
+	}
+}
+
 func TestSubjectSubstitution(t *testing.T) {
 	c := mustClient(t)
 	// A field matching the event's subject noun becomes the sentence subject.
