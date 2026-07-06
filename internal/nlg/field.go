@@ -101,7 +101,8 @@ func inferKind(key string, v any) Kind {
 	}
 	lk := strings.ToLower(key)
 	switch {
-	case containsAny(lk, "room", "place", "location", "zone", "area"):
+	case containsAny(lk, "room", "place", "location", "zone", "area",
+		"region", "datacenter", "datacentre", "cluster", "site"):
 		return KindPlace
 	case containsAny(lk, "time", "date", "when", "clock"):
 		return KindTime
@@ -200,7 +201,7 @@ func realize(f Field) string {
 	case KindName:
 		return realizeName(f)
 	case KindPlace:
-		return "in the " + valueString(f.Value)
+		return realizePlace(f)
 	case KindTime:
 		return "at " + valueString(f.Value)
 	case KindFlag:
@@ -213,6 +214,18 @@ func realize(f Field) string {
 	default:
 		return humanizeKey(f.Key) + " " + valueString(f.Value)
 	}
+}
+
+// realizePlace renders a location. A named location key (region, datacenter,
+// cluster, site) takes no article ("in eu-west"); a common location does
+// ("in the utility room").
+func realizePlace(f Field) string {
+	v := valueString(f.Value)
+	if containsAny(strings.ToLower(f.Key),
+		"region", "datacenter", "datacentre", "cluster", "site") {
+		return "in " + v
+	}
+	return "in the " + v
 }
 
 // realizeName renders a named entity. A combatant key ("enemy", "boss") frames

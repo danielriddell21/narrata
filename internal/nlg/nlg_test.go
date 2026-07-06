@@ -252,6 +252,21 @@ func TestPlaceAdjunctAttachesToClause(t *testing.T) {
 	}
 }
 
+func TestNamedPlaceTakesNoArticle(t *testing.T) {
+	c := mustClient(t)
+	// A region reads as a named location ("in eu-west"), not a common one
+	// ("in the eu-west"), and attaches to the clause rather than as a detail.
+	res, _ := c.Generate(context.Background(), Task{
+		Event: "server_offline", Data: map[string]any{"server": "web-2", "region": "eu-west"}, Seed: 1,
+	})
+	if !strings.Contains(res.Text, "in eu-west") || strings.Contains(res.Text, "in the eu-west") {
+		t.Fatalf("named place mis-articled: %q", res.Text)
+	}
+	if strings.Contains(res.Text, "region eu-west") {
+		t.Fatalf("region not realised as a place: %q", res.Text)
+	}
+}
+
 func TestCombatantNameReadsAsRelation(t *testing.T) {
 	c := mustClient(t)
 	// An enemy name reads as a relation ("facing the Bone Dragon"), attached to
