@@ -11,8 +11,8 @@ import (
 )
 
 // Native is a pure-Go text backend built on the nlg library: it composes
-// persona-flavoured narration from the event, data, and style with no model
-// file and no cgo. Output is deterministic for a given input.
+// persona-flavoured narration from the event, data, and style at runtime, with
+// no cgo. Output is deterministic for a given input.
 //
 // It is a thin adapter — the generation logic lives in the internal nlg package.
 type Native struct{ client *nlg.Client }

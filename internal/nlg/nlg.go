@@ -1,31 +1,14 @@
-// Package nlg is a pure-Go, dependency-free, persona-aware text generator with
-// an LLM-shaped call site. It turns a structured task (an event plus data) into
-// a short, in-character line using procedural generation — an authored,
-// persona-conditioned grammar plus salience selection and constraint solving.
-// There are no trained weights, no model files, and no cgo.
-//
-// nlg covers the structured subset of "things people use an LLM for"
-// (narrate/describe now; summarize/classify/extract planned). For open-ended
-// tasks that genuinely need a language model, register a [Backend] with
-// [WithFallback]; nlg routes those there rather than faking them, returning
-// [ErrNeedsModel] when no fallback is set.
-//
-// The package imports only the standard library and knows nothing about the
-// rest of Narrata, so it can be used on its own or extracted into its own
-// module unchanged.
 package nlg
 
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 )
 
-// ErrNeedsModel is returned when a task needs a real language model but no
-// fallback [Backend] is configured.
 var ErrNeedsModel = errors.New("nlg: task needs a language model; configure WithFallback")
 
-// Style conditions tone and delivery (mirrors a Narrata persona's style).
 type Style struct {
 	Tone      string
 	Energy    string
@@ -33,15 +16,12 @@ type Style struct {
 	Verbosity string
 }
 
-// Constraints bound the output. Zero fields mean "unbounded".
 type Constraints struct {
 	MaxWords      int
 	MaxSentences  int
 	AllowMarkdown bool
 }
 
-// Persona is a specifiable style profile. Define it in Go or load it from JSON
-// with [ParsePersonas] / [WithPersonasJSON].
 type Persona struct {
 	ID          string
 	Style       Style
@@ -49,11 +29,8 @@ type Persona struct {
 	Constraints Constraints // defaults; a Task's Constraints override these
 }
 
-// Intent selects the kind of generation.
 type Intent string
 
-// Supported intents. Narrate and Describe are implemented; the others are
-// reserved and route to the fallback until implemented.
 const (
 	Narrate   Intent = "narrate"
 	Describe  Intent = "describe"
@@ -62,7 +39,6 @@ const (
 	Extract   Intent = "extract"
 )
 
-// Task is the LLM-shaped request: structured in, text out.
 type Task struct {
 	Persona     string   // persona id; empty uses the default (or inline Style)
 	Intent      Intent   // defaults to Narrate
@@ -81,19 +57,15 @@ type Task struct {
 	Seed     uint64 // determinism; 0 derives a seed from the task
 }
 
-// Result is the generated output.
 type Result struct {
 	Text  string
 	Label string // set for Classify
 }
 
-// Backend is the escape hatch for tasks that need a real language model. Any
-// type with a Generate(ctx, prompt) (string, error) method satisfies it.
 type Backend interface {
 	Generate(ctx context.Context, prompt string) (string, error)
 }
 
-// Client generates text from tasks. It is safe for concurrent use.
 type Client struct {
 	personas map[string]Persona
 	def      string
@@ -101,10 +73,8 @@ type Client struct {
 	openers  map[string][]string // per-tone opener overrides
 }
 
-// Option configures a Client.
 type Option func(*Client) error
 
-// New builds a Client from options.
 func New(opts ...Option) (*Client, error) {
 	c := &Client{personas: make(map[string]Persona)}
 	for _, o := range opts {
@@ -115,7 +85,6 @@ func New(opts ...Option) (*Client, error) {
 	return c, nil
 }
 
-// WithPersona registers one or more personas.
 func WithPersona(ps ...Persona) Option {
 	return func(c *Client) error {
 		for _, p := range ps {
@@ -125,8 +94,6 @@ func WithPersona(ps ...Persona) Option {
 	}
 }
 
-// WithPersonasJSON registers personas from a personas.json document (Narrata
-// schema). The document's default persona becomes the Client default.
 func WithPersonasJSON(data []byte) Option {
 	return func(c *Client) error {
 		ps, def, err := ParsePersonas(data)
@@ -143,18 +110,14 @@ func WithPersonasJSON(data []byte) Option {
 	}
 }
 
-// WithDefaultPersona sets the persona used when a Task omits one.
 func WithDefaultPersona(id string) Option {
 	return func(c *Client) error { c.def = id; return nil }
 }
 
-// WithFallback sets the model backend used for open-ended intents.
 func WithFallback(b Backend) Option {
 	return func(c *Client) error { c.fallback = b; return nil }
 }
 
-// WithOpeners overrides the opener phrase pool for a tone, letting hosts extend
-// or replace the built-in grammar. An empty string in openers means "no opener".
 func WithOpeners(tone string, openers []string) Option {
 	return func(c *Client) error {
 		if c.openers == nil {
@@ -165,8 +128,6 @@ func WithOpeners(tone string, openers []string) Option {
 	}
 }
 
-// openerPool resolves the opener pool for a style: a per-client override for the
-// tone if present, else the built-in pool, gated by humour.
 func (c *Client) openerPool(style Style) []string {
 	pool, ok := c.openers[style.Tone]
 	if !ok {
@@ -177,16 +138,14 @@ func (c *Client) openerPool(style Style) []string {
 	return gateOpeners(pool, style)
 }
 
-// Persona returns a registered persona by id.
 func (c *Client) Persona(id string) (Persona, bool) {
 	p, ok := c.personas[id]
 	return p, ok
 }
 
-// Generate renders a task into text.
 func (c *Client) Generate(ctx context.Context, t Task) (Result, error) {
 	if err := ctx.Err(); err != nil {
-		return Result{}, err
+		return Result{}, fmt.Errorf("nlg: %w", err)
 	}
 	intent := t.Intent
 	if intent == "" {
@@ -212,7 +171,6 @@ func (c *Client) Generate(ctx context.Context, t Task) (Result, error) {
 	}
 }
 
-// resolve picks the effective persona and style for a task.
 func (c *Client) resolve(t Task) (Persona, Style) {
 	id := t.Persona
 	if id == "" {
@@ -225,8 +183,6 @@ func (c *Client) resolve(t Task) (Persona, Style) {
 	return p, p.Style
 }
 
-// exampleLine renders a persona-authored example template for the task's event,
-// if one is present and every placeholder can be filled.
 func (c *Client) exampleLine(t Task, style Style, cons Constraints) (string, bool) {
 	tmpl, ok := t.Examples[t.Event]
 	if !ok || tmpl == "" {
@@ -239,10 +195,6 @@ func (c *Client) exampleLine(t Task, style Style, cons Constraints) (string, boo
 	return terminate(applyBudget(capitalise(out), cons), style), true
 }
 
-// narrate builds a line from the task's event and data. A matching persona
-// example wins; otherwise known event shapes (completion, threshold, arrival,
-// departure, change) produce a proper sentence, and unclassified events fall
-// back to a tone-flavoured fragment.
 func (c *Client) narrate(t Task, style Style, cons Constraints) string {
 	if line, ok := c.exampleLine(t, style, cons); ok {
 		return line
@@ -294,8 +246,6 @@ func (c *Client) narrate(t Task, style Style, cons Constraints) string {
 	return terminate(applyBudget(clause+".", cons), style)
 }
 
-// describe produces a snapshot of a subject and its state, rather than an event
-// line: "Ari — health 8, facing the Bone Dragon."
 func (c *Client) describe(t Task, style Style, cons Constraints) string {
 	if line, ok := c.exampleLine(t, style, cons); ok {
 		return line
@@ -311,8 +261,6 @@ func (c *Client) describe(t Task, style Style, cons Constraints) string {
 	return terminate(applyBudget(line+".", cons), style)
 }
 
-// summarize condenses several salient fields into one line, optionally led by
-// the event.
 func (c *Client) summarize(t Task, style Style, cons Constraints) string {
 	fields := salient(withKinds(fieldsOf(t)), summaryMax(style))
 	phrases := realizeAll(fields)
@@ -346,9 +294,6 @@ func summaryMax(style Style) int {
 	}
 }
 
-// classify maps the task to one of Labels by keyword overlap. It is a
-// deterministic keyword classifier, not a semantic one: a label wins when its
-// words appear in the event/data/hint. With no Labels it defers to the fallback.
 func (c *Client) classify(ctx context.Context, t Task) (Result, error) {
 	if len(t.Labels) == 0 {
 		return c.viaFallback(ctx, t)
@@ -376,8 +321,6 @@ func (c *Client) classify(ctx context.Context, t Task) (Result, error) {
 	return Result{Label: best, Text: best}, nil
 }
 
-// extract pulls the requested Labels (keys) from the data as "key=value" pairs;
-// with no Labels it returns all fields.
 func (c *Client) extract(t Task) string {
 	fields := withKinds(fieldsOf(t))
 	keys := t.Labels
@@ -399,7 +342,6 @@ func (c *Client) extract(t Task) string {
 	return strings.Join(parts, ", ")
 }
 
-// fieldsOf returns the task's structured fields (Fields wins over Data).
 func fieldsOf(t Task) []Field {
 	if t.Fields != nil {
 		return t.Fields
@@ -407,7 +349,6 @@ func fieldsOf(t Task) []Field {
 	return flattenData(t.Data)
 }
 
-// realizeAll realises each field to a fragment.
 func realizeAll(fields []Field) []string {
 	ps := make([]string, 0, len(fields))
 	for _, f := range fields {
@@ -416,7 +357,6 @@ func realizeAll(fields []Field) []string {
 	return ps
 }
 
-// statementsOf realises each field to a full copular clause for verbose output.
 func statementsOf(fields []Field) []string {
 	ps := make([]string, 0, len(fields))
 	for _, f := range fields {
@@ -425,13 +365,10 @@ func statementsOf(fields []Field) []string {
 	return ps
 }
 
-// isVerbose reports whether the style asks for spelled-out, multi-sentence output.
 func isVerbose(style Style) bool {
 	return style.Verbosity == "verbose" || style.Verbosity == "detailed"
 }
 
-// splitSubject picks a subject phrase — preferring a field whose key matches the
-// event, then the first name field — and returns the remaining fields.
 func splitSubject(fields []Field, event string) (string, []Field) {
 	pick := -1
 	if event != "" {
@@ -473,12 +410,11 @@ func (c *Client) viaFallback(ctx context.Context, t Task) (Result, error) {
 	}
 	out, err := c.fallback.Generate(ctx, prompt)
 	if err != nil {
-		return Result{}, err
+		return Result{}, fmt.Errorf("nlg: fallback: %w", err)
 	}
 	return Result{Text: out}, nil
 }
 
-// maxFields chooses how many data fields to surface, from verbosity and budget.
 func maxFields(style Style, cons Constraints) int {
 	n := 2
 	switch style.Verbosity {

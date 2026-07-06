@@ -8,10 +8,8 @@ import (
 	"strings"
 )
 
-// Kind classifies a data field so it can be realised and scored appropriately.
 type Kind int
 
-// Field kinds.
 const (
 	KindOther    Kind = iota // fallback
 	KindQuantity             // numbers / measurements
@@ -22,15 +20,12 @@ const (
 	KindState                // descriptive state strings
 )
 
-// Field is one typed datum that may be narrated.
 type Field struct {
 	Key   string
 	Value any
 	Kind  Kind // inferred when zero (KindOther) and Value/Key give a better hint
 }
 
-// flattenData turns an arbitrary JSON-serialisable value into typed Fields with
-// stable, sorted keys. Nested objects are dotted (e.g. "player.health").
 func flattenData(data any) []Field {
 	if data == nil {
 		return nil
@@ -76,7 +71,6 @@ func flatten(prefix string, v any, out *[]Field) {
 	}
 }
 
-// withKinds returns a copy of fields with Kind inferred where unset.
 func withKinds(fields []Field) []Field {
 	out := make([]Field, len(fields))
 	for i, f := range fields {
@@ -124,7 +118,6 @@ func inferKind(key string, v any) Kind {
 	}
 }
 
-// score ranks a field's narration-worthiness.
 func score(k Kind) int {
 	switch k {
 	case KindQuantity, KindName:
@@ -138,9 +131,6 @@ func score(k Kind) int {
 	}
 }
 
-// fieldScore ranks a field's narration-worthiness, boosting notable quantities:
-// values with units, implied percentages, and percentages near their limit read
-// as the interesting fact.
 func fieldScore(f Field) int {
 	s := score(f.Kind)
 	if f.Kind != KindQuantity {
@@ -158,11 +148,6 @@ func fieldScore(f Field) int {
 	return s
 }
 
-// partitionAdjuncts splits fields into adjuncts, which attach to a verb clause
-// ("... in the utility room", "... facing the Bone Dragon"), and coordinate
-// details, which read as a list ("cpu 96% and latency 950ms"). Adjuncts are
-// ordered place, then time, then relation, so the clause reads naturally
-// ("done in the lab at noon facing the boss").
 func partitionAdjuncts(fields []Field) (adjuncts, details []Field) {
 	var places, times, relations []Field
 	for _, f := range fields {
@@ -177,12 +162,13 @@ func partitionAdjuncts(fields []Field) (adjuncts, details []Field) {
 			details = append(details, f)
 		}
 	}
-	adjuncts = append(places, times...)
+	adjuncts = make([]Field, 0, len(places)+len(times)+len(relations))
+	adjuncts = append(adjuncts, places...)
+	adjuncts = append(adjuncts, times...)
 	adjuncts = append(adjuncts, relations...)
 	return adjuncts, details
 }
 
-// salient returns up to max fields, highest score first, stable within a score.
 func salient(fields []Field, max int) []Field {
 	if max <= 0 || len(fields) <= max {
 		return fields
@@ -203,7 +189,6 @@ func salient(fields []Field, max int) []Field {
 	return kept
 }
 
-// realize turns a field into a short natural fragment.
 func realize(f Field) string {
 	switch f.Kind {
 	case KindName:
@@ -224,9 +209,6 @@ func realize(f Field) string {
 	}
 }
 
-// realizeStatement turns a field into a full copular clause ("cpu is at 96%")
-// for the second sentence of verbose narration, where a fragment would read as
-// telegraphic.
 func realizeStatement(f Field) string {
 	switch f.Kind {
 	case KindQuantity:
@@ -243,8 +225,6 @@ func realizeStatement(f Field) string {
 	}
 }
 
-// quantityStatement renders a numeric field as a copular clause: "latency is
-// 950ms", "cpu is at 96%", "queue is 3".
 func quantityStatement(f Field) string {
 	base, unit := unitFor(f.Key)
 	v := formatNumber(f.Value)
@@ -257,14 +237,10 @@ func quantityStatement(f Field) string {
 	return humanizeKey(f.Key) + " is " + v
 }
 
-// ordinalIndexKeys name an integer's position in time ("minute 89" -> "in the
-// 89th minute") rather than a measured quantity.
 var ordinalIndexKeys = map[string]bool{
 	"minute": true, "lap": true, "round": true, "wave": true,
 }
 
-// realizeTime renders a time field: an ordinal index ("in the 89th minute") for
-// an index key, else a timestamp ("at 14:30").
 func realizeTime(f Field) string {
 	lk := strings.ToLower(f.Key)
 	if ordinalIndexKeys[lk] {
@@ -275,7 +251,6 @@ func realizeTime(f Field) string {
 	return "at " + valueString(f.Value)
 }
 
-// ordinal renders an integer as an English ordinal ("1st", "2nd", "89th").
 func ordinal(n int) string {
 	suffix := "th"
 	if n%100 < 11 || n%100 > 13 {
@@ -291,9 +266,6 @@ func ordinal(n int) string {
 	return strconv.Itoa(n) + suffix
 }
 
-// realizePlace renders a location. A named location key (region, datacenter,
-// cluster, site) takes no article ("in eu-west"); a common location does
-// ("in the utility room").
 func realizePlace(f Field) string {
 	v := valueString(f.Value)
 	if containsAny(strings.ToLower(f.Key),
@@ -303,10 +275,6 @@ func realizePlace(f Field) string {
 	return "in the " + v
 }
 
-// realizeName renders a named entity. A combatant key ("enemy", "boss") frames
-// the name as a relation ("facing the Bone Dragon"); other names render bare.
-// The definite article is added only for multi-word names ("the Bone Dragon"),
-// not proper names ("facing Ari").
 func realizeName(f Field) string {
 	name := valueString(f.Value)
 	rel := nameRelation(f.Key)
@@ -319,8 +287,6 @@ func realizeName(f Field) string {
 	return rel + " " + name
 }
 
-// nameRelation returns the preposition that frames a named non-subject entity,
-// or "" when the key implies no particular relation.
 func nameRelation(key string) string {
 	if containsAny(strings.ToLower(key),
 		"enemy", "opponent", "foe", "boss", "villain", "attacker", "adversary") {
@@ -329,8 +295,6 @@ func nameRelation(key string) string {
 	return ""
 }
 
-// realizeQuantity formats a numeric field with a unit inferred from the key
-// ("latency_ms" -> "latency 950ms") or an implied percent ("cpu" 96 -> "cpu 96%").
 func realizeQuantity(f Field) string {
 	base, unit := unitFor(f.Key)
 	v := formatNumber(f.Value)
@@ -348,20 +312,27 @@ func realizeQuantity(f Field) string {
 	return humanizeKey(f.Key) + " " + v
 }
 
-// redundantDims are generic dimension keys made redundant by a unit: a value
-// keyed "size" with a unit needs no "size" prefix ("512MB", not "size 512MB").
 var redundantDims = map[string]bool{
 	"size": true, "length": true, "amount": true,
 	"value": true, "duration": true, "total": true,
 }
 
-// unitSuffixes maps a key suffix to the unit that replaces it.
 var unitSuffixes = []struct{ suf, unit string }{
-	{"_ms", "ms"}, {"_msec", "ms"},
-	{"_seconds", "s"}, {"_secs", "s"}, {"_sec", "s"},
-	{"_kb", "KB"}, {"_mb", "MB"}, {"_gb", "GB"}, {"_tb", "TB"},
-	{"_hz", "Hz"}, {"_khz", "kHz"}, {"_mhz", "MHz"},
-	{"_bps", "bps"}, {"_percent", "%"}, {"_pct", "%"},
+	{"_ms", "ms"},
+	{"_msec", "ms"},
+	{"_seconds", "s"},
+	{"_secs", "s"},
+	{"_sec", "s"},
+	{"_kb", "KB"},
+	{"_mb", "MB"},
+	{"_gb", "GB"},
+	{"_tb", "TB"},
+	{"_hz", "Hz"},
+	{"_khz", "kHz"},
+	{"_mhz", "MHz"},
+	{"_bps", "bps"},
+	{"_percent", "%"},
+	{"_pct", "%"},
 }
 
 func unitFor(key string) (base, unit string) {
@@ -374,7 +345,6 @@ func unitFor(key string) (base, unit string) {
 	return key, ""
 }
 
-// impliedPercent reports keys that read as a percentage in the 0–100 range.
 func impliedPercent(key string, v any) bool {
 	lk := strings.ToLower(key)
 	if !containsAny(lk, "cpu", "mem", "disk", "battery", "usage", "util") {
@@ -384,7 +354,6 @@ func impliedPercent(key string, v any) bool {
 	return ok && f >= 0 && f <= 100
 }
 
-// toInt reports an integer-valued number, rejecting fractions and non-numbers.
 func toInt(v any) (int, bool) {
 	f, ok := toFloat(v)
 	if !ok || f != float64(int64(f)) {
@@ -409,7 +378,6 @@ func toFloat(v any) (float64, bool) {
 	}
 }
 
-// formatNumber renders a value, adding thousands separators to large integers.
 func formatNumber(v any) string {
 	s := valueString(v)
 	f, ok := toFloat(v)
@@ -418,7 +386,7 @@ func formatNumber(v any) string {
 	}
 	neg := strings.HasPrefix(s, "-")
 	digits := strings.TrimPrefix(s, "-")
-	var out []byte
+	out := make([]byte, 0, len(digits)+len(digits)/3)
 	for i, c := range []byte(digits) {
 		if i > 0 && (len(digits)-i)%3 == 0 {
 			out = append(out, ',')
@@ -449,9 +417,6 @@ func valueString(v any) string {
 	}
 }
 
-// renderExample fills {placeholder} tokens in a template from the fields
-// (matched by key or humanized key, case-insensitively). It reports whether
-// every placeholder was filled; an unfilled template should be discarded.
 func renderExample(tmpl string, fields []Field) (string, bool) {
 	lookup := make(map[string]string, len(fields)*2)
 	for _, f := range fields {

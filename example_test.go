@@ -9,8 +9,7 @@ import (
 )
 
 // Example shows the minimal flow: construct an Engine with the default
-// deterministic backend, narrate an event, and print the text. It needs no
-// model file.
+// deterministic backend, narrate an event, and print the text.
 func Example() {
 	engine, err := narrata.New(narrata.Config{})
 	if err != nil {
@@ -60,7 +59,7 @@ func ExampleEngine_Generate() {
 }
 
 // Example_speech requests text plus synthesized speech using the mock TTS
-// backend, which produces a valid WAV without a model file.
+// backend, which produces a valid WAV in pure Go.
 func Example_speech() {
 	engine, err := narrata.New(narrata.Config{
 		TTS: narrata.TTSConfig{Enabled: true, Backend: "mock"},

@@ -144,7 +144,7 @@ func TestHumourGatingSuppressesColourfulOpeners(t *testing.T) {
 			Style: &Style{Tone: "witty", Humour: "none"}, Seed: uint64(i + 1),
 		})
 		for opener := range wittyOpeners {
-			if strings.HasPrefix(res.Text, strings.TrimRight(opener, " —, ")) &&
+			if strings.HasPrefix(res.Text, strings.TrimRight(opener, " —,")) &&
 				opener != "" {
 				t.Fatalf("colourful opener %q leaked with humour=none: %q", opener, res.Text)
 			}

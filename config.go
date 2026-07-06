@@ -3,8 +3,8 @@ package narrata
 import "time"
 
 // Config configures an [Engine]. The zero value is usable: with no text backend
-// specified, the Engine defaults to the deterministic "mock" backend so that
-// host apps can wire up and test without a model file.
+// specified, the Engine defaults to the deterministic "mock" backend so host
+// apps can wire up and test with zero setup.
 type Config struct {
 	// PersonasPath is an optional path to a single personas.json file.
 	PersonasPath string
@@ -31,9 +31,7 @@ type TextConfig struct {
 	// Backend names the implementation: "mock" (default), "template", or
 	// "native" (persona-aware pure-Go generation).
 	Backend string
-	// ModelPath is the path to a model file, for any model-backed backend.
-	ModelPath string
-	// ContextTokens is the model context window. Zero uses the backend default.
+	// ContextTokens bounds the generation context. Zero uses the backend default.
 	ContextTokens int
 	// Temperature controls sampling randomness. Zero uses the backend default.
 	Temperature float32
@@ -50,8 +48,6 @@ type TTSConfig struct {
 	Enabled bool
 	// Backend names the implementation: "mock".
 	Backend string
-	// ModelPath is the path to a TTS model file, for any model-backed backend.
-	ModelPath string
 	// DefaultVoice is used when a persona declares no voice.
 	DefaultVoice string
 	// SampleRate is the output sample rate in Hz. Zero uses the backend default.

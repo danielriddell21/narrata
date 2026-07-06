@@ -8,12 +8,12 @@ var (
 	ErrPersonaNotFound = errors.New("narrata: persona not found")
 	// ErrInvalidRequest means the request failed validation.
 	ErrInvalidRequest = errors.New("narrata: invalid request")
-	// ErrModelNotLoaded means a backend failed to initialise or is missing.
-	ErrModelNotLoaded = errors.New("narrata: model not loaded")
+	// ErrBackendUnavailable means the configured backend could not be
+	// initialised, such as an unknown backend name.
+	ErrBackendUnavailable = errors.New("narrata: backend unavailable")
 	// ErrGenerationTimeout means generation exceeded the deadline.
 	ErrGenerationTimeout = errors.New("narrata: generation timed out")
-	// ErrGeneration means text generation failed for a reason other than a
-	// timeout or a missing model, such as a mid-stream decode failure.
+	// ErrGeneration means generation failed for a reason other than a timeout.
 	ErrGeneration = errors.New("narrata: generation failed")
 	// ErrTTSUnavailable means speech was requested but TTS is disabled or
 	// failed to initialise.

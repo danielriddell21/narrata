@@ -8,10 +8,9 @@ import (
 	"github.com/danielriddell21/narrata/internal/prompt"
 )
 
-// Template is a pure-Go fallback backend for constrained systems or when no
-// model file is available. It composes a readable sentence from the event and
-// data without any inference. Output is deterministic but more prose-like than
-// the Mock backend.
+// Template is a pure-Go backend for constrained systems. It composes a readable
+// sentence from the event and data without any inference. Output is
+// deterministic but more prose-like than the Mock backend.
 type Template struct{}
 
 // NewTemplate returns a Template backend.

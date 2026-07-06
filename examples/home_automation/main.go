@@ -1,6 +1,6 @@
 // Command home_automation demonstrates Narrata producing a spoken announcement
 // for a smart-home event. It enables the mock TTS backend so the speech path
-// runs with no model file.
+// runs with no external files.
 package main
 
 import (

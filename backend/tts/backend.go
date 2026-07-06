@@ -44,8 +44,6 @@ type Result struct {
 type Options struct {
 	// Backend names the implementation: "mock".
 	Backend string
-	// ModelPath is the path to the TTS model file.
-	ModelPath string
 	// DefaultVoice is used when a persona declares no voice.
 	DefaultVoice string
 	// SampleRate is the output sample rate in Hz. Zero uses the backend default.

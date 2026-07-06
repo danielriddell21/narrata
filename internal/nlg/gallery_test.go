@@ -35,8 +35,10 @@ var galleryEvents = []Task{
 	{Event: "player_low_health", Data: map[string]any{"player": "Ari", "health": 8, "enemy": "Bone Dragon"}},
 	{Event: "goal_scored", Data: map[string]any{"team": "Rovers", "minute": 89}},
 	{Event: "backup_uploaded", Data: map[string]any{"file": "db.sql", "size_mb": 512}},
-	{Event: "player_died", Data: map[string]any{"player": "Ari", "enemy": "Bone Dragon"},
-		Examples: map[string]string{"player_died": "{player} has fallen to the {enemy}."}},
+	{
+		Event: "player_died", Data: map[string]any{"player": "Ari", "enemy": "Bone Dragon"},
+		Examples: map[string]string{"player_died": "{player} has fallen to the {enemy}."},
+	},
 }
 
 // TestGallery renders every persona x event and diffs against a golden file, so

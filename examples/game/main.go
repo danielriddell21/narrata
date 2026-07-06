@@ -1,6 +1,6 @@
 // Command game demonstrates Narrata producing short, persona-shaped narration
 // for game events. It uses the pure-Go native backend, so it runs locally with
-// no model file.
+// no external files.
 package main
 
 import (

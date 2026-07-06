@@ -9,7 +9,7 @@ import (
 )
 
 // ExampleNew selects the mock TTS backend and synthesizes a short WAV buffer
-// without a model file.
+// in pure Go.
 func ExampleNew() {
 	b, err := tts.New(tts.Options{Backend: "mock", SampleRate: 24000})
 	if err != nil {

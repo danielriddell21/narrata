@@ -5,8 +5,6 @@ import (
 	"strings"
 )
 
-// rng is a small deterministic PRNG (splitmix64) so generation is reproducible
-// from a seed without depending on math/rand's global state.
 type rng struct{ s uint64 }
 
 func newRNG(seed uint64) *rng { return &rng{s: seed} }
@@ -33,13 +31,15 @@ func (r *rng) pick(ss []string) string {
 	return ss[r.intn(len(ss))]
 }
 
-// seedFor derives a stable seed from the task's identity.
 func seedFor(t Task, style Style) uint64 {
 	if t.Seed != 0 {
 		return t.Seed
 	}
 	h := fnv.New64a()
-	write := func(s string) { h.Write([]byte(s)); h.Write([]byte{0}) }
+	write := func(s string) {
+		_, _ = h.Write([]byte(s))
+		_, _ = h.Write([]byte{0})
+	}
 	write(t.Persona)
 	write(string(t.Intent))
 	write(t.Event)
@@ -55,7 +55,6 @@ func seedFor(t Task, style Style) uint64 {
 	return h.Sum64()
 }
 
-// openersByTone gives each tone a small pool of opening phrases; "" = no opener.
 var openersByTone = map[string][]string{
 	"dramatic":     {"", "", "And so, ", "Mark this — ", "At last, "},
 	"calm":         {"", "", "Note: ", "For your awareness, "},
@@ -70,7 +69,6 @@ var openersByTone = map[string][]string{
 	"aggressive":   {"", "Boom — ", "There it is — "},
 }
 
-// gateOpeners drops colourful openers when humour is off so the voice stays plain.
 func gateOpeners(pool []string, style Style) []string {
 	if style.Humour == "" || style.Humour == "none" {
 		plain := pool[:0:0]
@@ -86,14 +84,11 @@ func gateOpeners(pool []string, style Style) []string {
 	return pool
 }
 
-// wittyOpeners are colourful openers suppressed when humour is off.
 var wittyOpeners = map[string]bool{
 	"Delightful — ": true, "Fancy that — ": true, "Well now, ": true,
 	"Of course, ": true, "Naturally, ": true, "Boom — ": true, "There it is — ": true,
 }
 
-// compose builds a single line: opener + event clause + data clause, bounded by
-// cons. The opener pool is resolved and gated by the caller.
 func compose(openers []string, eventPhrase string, phrases []string, r *rng, cons Constraints) string {
 	opener := r.pick(openers)
 	phrases = fitPhrases(opener+eventPhrase, phrases, cons)
@@ -114,9 +109,6 @@ func compose(openers []string, eventPhrase string, phrases []string, r *rng, con
 	return applyBudget(capitalise(opener+eventPhrase+dc+"."), cons)
 }
 
-// fitPhrases keeps only the leading detail phrases that fit within the word
-// budget (counting a separator each), so details are dropped whole rather than
-// truncated mid-phrase. With no budget it keeps them all.
 func fitPhrases(base string, phrases []string, cons Constraints) []string {
 	if cons.MaxWords <= 0 {
 		return phrases
@@ -134,8 +126,6 @@ func fitPhrases(base string, phrases []string, cons Constraints) []string {
 	return kept
 }
 
-// joinList joins phrases with commas and a conjunction before the last item
-// ("a", "a and b", "a, b, and c").
 func joinList(items []string) string {
 	switch len(items) {
 	case 0:
@@ -149,7 +139,6 @@ func joinList(items []string) string {
 	}
 }
 
-// applyBudget trims a line to the sentence/word constraints.
 func applyBudget(line string, cons Constraints) string {
 	if cons.MaxSentences > 0 {
 		line = limitSentences(line, cons.MaxSentences)
@@ -160,7 +149,6 @@ func applyBudget(line string, cons Constraints) string {
 	return line
 }
 
-// humanizeEvent turns a snake/kebab-case event into a readable phrase.
 func humanizeEvent(event string) string {
 	if event == "" {
 		return "Event"
@@ -173,17 +161,11 @@ func humanizeEvent(event string) string {
 	return strings.Join(words, " ")
 }
 
-// trailingAsides are sentence-adverb flourishes some templates append after a
-// comma ("... is done, somehow"). They read as an afterthought on the whole
-// clause, so an adjunct must slot before them, not after.
 var trailingAsides = map[string]bool{
 	"somehow": true, "naturally": true, "finally": true,
 	"alas": true, "at last": true,
 }
 
-// splitTrailingAside separates a trailing sentence-adverb aside (", somehow")
-// from a clause, returning the head and the aside (including its leading ", ").
-// It returns an empty aside when the clause has none.
 func splitTrailingAside(clause string) (head, aside string) {
 	i := strings.LastIndex(clause, ", ")
 	if i < 0 {
@@ -202,9 +184,6 @@ func capitalise(s string) string {
 	return strings.ToUpper(s[:1]) + s[1:]
 }
 
-// limitSentences keeps the first max sentences. A terminator only ends a
-// sentence when it is at the end of the string or followed by whitespace, so
-// periods inside tokens (e.g. "report.pdf") do not split the text.
 func limitSentences(s string, max int) string {
 	count := 0
 	for i := 0; i < len(s); i++ {

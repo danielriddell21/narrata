@@ -45,9 +45,7 @@ type Result struct {
 type Options struct {
 	// Backend names the implementation: "mock", "template", or "native".
 	Backend string
-	// ModelPath is the path to a model file, for any model-backed backend.
-	ModelPath string
-	// ContextTokens is the model context window. Zero uses the backend default.
+	// ContextTokens bounds the generation context. Zero uses the backend default.
 	ContextTokens int
 	// Temperature controls sampling randomness. Zero uses the backend default.
 	Temperature float32
@@ -58,7 +56,7 @@ type Options struct {
 }
 
 // New constructs a backend by name. An empty name defaults to the deterministic
-// mock backend so apps can run without a model file.
+// mock backend.
 func New(o Options) (Backend, error) {
 	switch o.Backend {
 	case "", "mock":
