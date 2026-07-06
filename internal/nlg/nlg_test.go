@@ -252,6 +252,36 @@ func TestPlaceAdjunctAttachesToClause(t *testing.T) {
 	}
 }
 
+func TestVerboseSplitsDetailsIntoSecondSentence(t *testing.T) {
+	c := mustClient(t)
+	task := Task{
+		Event: "service_degraded",
+		Data:  map[string]any{"service": "payments-api", "cpu": 96, "latency_ms": 950},
+		Seed:  1,
+	}
+
+	brief := task
+	brief.Style = &Style{Verbosity: "brief"}
+	res, _ := c.Generate(context.Background(), brief)
+	if strings.Count(res.Text, ".") != 1 || strings.Contains(res.Text, " is at ") {
+		t.Fatalf("brief should be one em-dash sentence: %q", res.Text)
+	}
+
+	verbose := task
+	verbose.Style = &Style{Verbosity: "verbose"}
+	res, _ = c.Generate(context.Background(), verbose)
+	// Two sentences, with details spelled out as copular clauses.
+	if strings.Count(res.Text, ". ") != 1 || !strings.HasSuffix(res.Text, ".") {
+		t.Fatalf("verbose should be two sentences: %q", res.Text)
+	}
+	if !strings.Contains(res.Text, "is at 96%") || !strings.Contains(res.Text, "latency is 950ms") {
+		t.Fatalf("verbose detail sentence malformed: %q", res.Text)
+	}
+	if strings.Contains(res.Text, "—") {
+		t.Fatalf("verbose should not use an em-dash list: %q", res.Text)
+	}
+}
+
 func TestIndexKeyReadsAsOrdinalTime(t *testing.T) {
 	c := mustClient(t)
 	// An index key (minute) reads as an ordinal position in time attached to the

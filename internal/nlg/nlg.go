@@ -279,6 +279,15 @@ func (c *Client) narrate(t Task, style Style, cons Constraints) string {
 		head, aside := splitTrailingAside(clause)
 		clause = head + " " + strings.Join(adj, " ") + aside
 	}
+	// A verbose voice spells the details out as a second sentence ("... is
+	// struggling. CPU is at 96% and latency is 950ms."); others keep the terse
+	// em-dash list.
+	if isVerbose(style) {
+		if s := fitPhrases(clause, statementsOf(details), cons); len(s) > 0 {
+			second := capitalise(joinList(s)) + "."
+			return terminate(applyBudget(clause+". "+second, cons), style)
+		}
+	}
 	if p := fitPhrases(clause, realizeAll(details), cons); len(p) > 0 {
 		clause += " — " + joinList(p)
 	}
@@ -407,6 +416,20 @@ func realizeAll(fields []Field) []string {
 	return ps
 }
 
+// statementsOf realises each field to a full copular clause for verbose output.
+func statementsOf(fields []Field) []string {
+	ps := make([]string, 0, len(fields))
+	for _, f := range fields {
+		ps = append(ps, realizeStatement(f))
+	}
+	return ps
+}
+
+// isVerbose reports whether the style asks for spelled-out, multi-sentence output.
+func isVerbose(style Style) bool {
+	return style.Verbosity == "verbose" || style.Verbosity == "detailed"
+}
+
 // splitSubject picks a subject phrase — preferring a field whose key matches the
 // event, then the first name field — and returns the remaining fields.
 func splitSubject(fields []Field, event string) (string, []Field) {
@@ -463,6 +486,8 @@ func maxFields(style Style, cons Constraints) int {
 		n = 1
 	case "brief":
 		n = 2
+	case "verbose", "detailed":
+		n = 4
 	}
 	if cons.MaxWords > 0 && cons.MaxWords < 12 {
 		n = 1

@@ -224,6 +224,39 @@ func realize(f Field) string {
 	}
 }
 
+// realizeStatement turns a field into a full copular clause ("cpu is at 96%")
+// for the second sentence of verbose narration, where a fragment would read as
+// telegraphic.
+func realizeStatement(f Field) string {
+	switch f.Kind {
+	case KindQuantity:
+		return quantityStatement(f)
+	case KindFlag:
+		if b, ok := f.Value.(bool); ok && !b {
+			return humanizeKey(f.Key) + " is off"
+		}
+		return humanizeKey(f.Key) + " is on"
+	case KindPlace, KindTime:
+		return realize(f)
+	default:
+		return humanizeKey(f.Key) + " is " + valueString(f.Value)
+	}
+}
+
+// quantityStatement renders a numeric field as a copular clause: "latency is
+// 950ms", "cpu is at 96%", "queue is 3".
+func quantityStatement(f Field) string {
+	base, unit := unitFor(f.Key)
+	v := formatNumber(f.Value)
+	if unit != "" {
+		return humanizeKey(base) + " is " + v + unit
+	}
+	if impliedPercent(f.Key, f.Value) {
+		return humanizeKey(f.Key) + " is at " + v + "%"
+	}
+	return humanizeKey(f.Key) + " is " + v
+}
+
 // ordinalIndexKeys name an integer's position in time ("minute 89" -> "in the
 // 89th minute") rather than a measured quantity.
 var ordinalIndexKeys = map[string]bool{
