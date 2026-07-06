@@ -4,7 +4,7 @@ door_opened            The door is open in the garage.
 service_degraded       Payments-api is struggling — cpu 96%.
 disk_full              /dev/sda is spiking — usage 99%.
 server_offline         Web-2 went dark — region eu-west.
-player_low_health      Ari is nearly out — Bone Dragon.
+player_low_health      Ari is nearly out facing the Bone Dragon.
 goal_scored            Rovers scored — minute 89.
 backup_uploaded        The backup uploaded — size 512MB.
 player_died            Ari has fallen to the Bone Dragon.
@@ -15,7 +15,7 @@ door_opened            The door stands open in the garage!
 service_degraded       Payments-api is in trouble — cpu 96%!
 disk_full              /dev/sda is off the charts — usage 99%!
 server_offline         Web-2 is silenced — region eu-west!
-player_low_health      Ari is on the brink — Bone Dragon!
+player_low_health      Ari is on the brink facing the Bone Dragon!
 goal_scored            Rovers scored — minute 89!
 backup_uploaded        The backup uploaded — size 512MB!
 player_died            Ari has fallen to the Bone Dragon!
@@ -26,7 +26,7 @@ door_opened            The door opened in the garage.
 service_degraded       Payments-api is struggling — cpu 96%.
 disk_full              /dev/sda is high — usage 99%.
 server_offline         Web-2 went dark — region eu-west.
-player_low_health      Ari is almost gone — Bone Dragon.
+player_low_health      Ari is almost gone facing the Bone Dragon.
 goal_scored            Rovers scored — minute 89.
 backup_uploaded        The backup uploaded — size 512MB.
 player_died            Ari has fallen to the Bone Dragon.
@@ -37,7 +37,7 @@ door_opened            The door is open in the garage.
 service_degraded       Payments-api is struggling — cpu 96% and latency 950ms.
 disk_full              /dev/sda is spiking — usage 99%.
 server_offline         Web-2 went dark — region eu-west.
-player_low_health      Ari is nearly out — Bone Dragon and health 8.
+player_low_health      Ari is nearly out facing the Bone Dragon — health 8.
 goal_scored            Rovers scored — minute 89.
 backup_uploaded        The backup uploaded — file db.sql and size 512MB.
 player_died            Ari has fallen to the Bone Dragon.
@@ -48,7 +48,7 @@ door_opened            The door stands open in the garage!
 service_degraded       Payments-api is in trouble — cpu 96%!
 disk_full              /dev/sda is off the charts — usage 99%!
 server_offline         Web-2 is silenced — region eu-west!
-player_low_health      Ari is on the brink — Bone Dragon!
+player_low_health      Ari is on the brink facing the Bone Dragon!
 goal_scored            Rovers scored — minute 89!
 backup_uploaded        The backup uploaded — size 512MB!
 player_died            Ari has fallen to the Bone Dragon!
@@ -59,7 +59,7 @@ door_opened            The door is open in the garage.
 service_degraded       Payments-api is struggling — cpu 96%.
 disk_full              /dev/sda is spiking — usage 99%.
 server_offline         Web-2 went dark — region eu-west.
-player_low_health      Ari is nearly out — Bone Dragon.
+player_low_health      Ari is nearly out facing the Bone Dragon.
 goal_scored            Rovers scored — minute 89.
 backup_uploaded        The backup uploaded — size 512MB.
 player_died            Ari has fallen to the Bone Dragon.

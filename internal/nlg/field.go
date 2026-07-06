@@ -107,7 +107,8 @@ func inferKind(key string, v any) Kind {
 		return KindTime
 	case containsAny(lk, "name", "player", "user", "enemy", "who", "actor", "service",
 		"team", "host", "node", "device", "app", "job", "channel", "sensor",
-		"bot", "npc", "unit", "character", "agent", "worker"):
+		"bot", "npc", "unit", "character", "agent", "worker",
+		"opponent", "foe", "boss", "villain", "attacker", "adversary"):
 		return KindName
 	default:
 		return KindOther
@@ -148,23 +149,28 @@ func fieldScore(f Field) int {
 	return s
 }
 
-// partitionAdjuncts splits fields into place/time adjuncts, which attach to a
-// verb clause ("... in the utility room"), and coordinate details, which read
-// as a list ("cpu 96% and latency 950ms"). Place adjuncts are ordered before
-// time so the clause reads naturally ("done in the lab at noon").
+// partitionAdjuncts splits fields into adjuncts, which attach to a verb clause
+// ("... in the utility room", "... facing the Bone Dragon"), and coordinate
+// details, which read as a list ("cpu 96% and latency 950ms"). Adjuncts are
+// ordered place, then time, then relation, so the clause reads naturally
+// ("done in the lab at noon facing the boss").
 func partitionAdjuncts(fields []Field) (adjuncts, details []Field) {
-	var places, times []Field
+	var places, times, relations []Field
 	for _, f := range fields {
-		switch f.Kind {
-		case KindPlace:
+		switch {
+		case f.Kind == KindPlace:
 			places = append(places, f)
-		case KindTime:
+		case f.Kind == KindTime:
 			times = append(times, f)
+		case f.Kind == KindName && nameRelation(f.Key) != "":
+			relations = append(relations, f)
 		default:
 			details = append(details, f)
 		}
 	}
-	return append(places, times...), details
+	adjuncts = append(places, times...)
+	adjuncts = append(adjuncts, relations...)
+	return adjuncts, details
 }
 
 // salient returns up to max fields, highest score first, stable within a score.
@@ -192,7 +198,7 @@ func salient(fields []Field, max int) []Field {
 func realize(f Field) string {
 	switch f.Kind {
 	case KindName:
-		return valueString(f.Value)
+		return realizeName(f)
 	case KindPlace:
 		return "in the " + valueString(f.Value)
 	case KindTime:
@@ -207,6 +213,32 @@ func realize(f Field) string {
 	default:
 		return humanizeKey(f.Key) + " " + valueString(f.Value)
 	}
+}
+
+// realizeName renders a named entity. A combatant key ("enemy", "boss") frames
+// the name as a relation ("facing the Bone Dragon"); other names render bare.
+// The definite article is added only for multi-word names ("the Bone Dragon"),
+// not proper names ("facing Ari").
+func realizeName(f Field) string {
+	name := valueString(f.Value)
+	rel := nameRelation(f.Key)
+	if rel == "" {
+		return name
+	}
+	if strings.Contains(strings.TrimSpace(name), " ") {
+		return rel + " the " + name
+	}
+	return rel + " " + name
+}
+
+// nameRelation returns the preposition that frames a named non-subject entity,
+// or "" when the key implies no particular relation.
+func nameRelation(key string) string {
+	if containsAny(strings.ToLower(key),
+		"enemy", "opponent", "foe", "boss", "villain", "attacker", "adversary") {
+		return "facing"
+	}
+	return ""
 }
 
 // realizeQuantity formats a numeric field with a unit inferred from the key

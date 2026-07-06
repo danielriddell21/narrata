@@ -240,6 +240,35 @@ func TestShapedSentences(t *testing.T) {
 	}
 }
 
+func TestPlaceAdjunctAttachesToClause(t *testing.T) {
+	c := mustClient(t)
+	// A place field attaches to the verb clause ("open in the garage"), not as an
+	// em-dash detail ("open — in the garage").
+	res, _ := c.Generate(context.Background(), Task{
+		Event: "door_opened", Data: map[string]any{"room": "garage"}, Seed: 1,
+	})
+	if want := "in the garage"; !strings.Contains(res.Text, want) || strings.Contains(res.Text, "— in the") {
+		t.Fatalf("place not attached to clause: %q", res.Text)
+	}
+}
+
+func TestCombatantNameReadsAsRelation(t *testing.T) {
+	c := mustClient(t)
+	// An enemy name reads as a relation ("facing the Bone Dragon"), attached to
+	// the clause rather than joined into the detail list with "and".
+	res, _ := c.Generate(context.Background(), Task{
+		Event: "player_low_health",
+		Data:  map[string]any{"player": "Ari", "health": 8, "enemy": "Bone Dragon"},
+		Style: &Style{Verbosity: "brief"}, Seed: 1,
+	})
+	if !strings.Contains(res.Text, "facing the Bone Dragon") {
+		t.Fatalf("enemy not framed as relation: %q", res.Text)
+	}
+	if strings.Contains(res.Text, "Bone Dragon and") {
+		t.Fatalf("enemy garden-paths with a detail: %q", res.Text)
+	}
+}
+
 func TestBudgetDropsWholeDetails(t *testing.T) {
 	c := mustClient(t)
 	res, _ := c.Generate(context.Background(), Task{
