@@ -1,6 +1,6 @@
 ## narrator (calm)
-washing_machine_done   The washing machine is done — in the utility room.
-door_opened            The door is open — in the garage.
+washing_machine_done   The washing machine is done in the utility room.
+door_opened            The door is open in the garage.
 service_degraded       Payments-api is struggling — cpu 96%.
 disk_full              /dev/sda is spiking — usage 99%.
 server_offline         Web-2 went dark — region eu-west.
@@ -10,8 +10,8 @@ backup_uploaded        The backup uploaded — size 512MB.
 player_died            Ari has fallen to the Bone Dragon.
 
 ## dungeon_master (dramatic)
-washing_machine_done   The washing machine is finally done — in the utility room!
-door_opened            The door stands open — in the garage!
+washing_machine_done   The washing machine is finally done in the utility room!
+door_opened            The door stands open in the garage!
 service_degraded       Payments-api is in trouble — cpu 96%!
 disk_full              /dev/sda is off the charts — usage 99%!
 server_offline         Web-2 is silenced — region eu-west!
@@ -21,8 +21,8 @@ backup_uploaded        The backup uploaded — size 512MB!
 player_died            Ari has fallen to the Bone Dragon!
 
 ## funny_narrator (dry)
-washing_machine_done   The washing machine is done, somehow — in the utility room.
-door_opened            The door opened — in the garage.
+washing_machine_done   The washing machine is done, somehow in the utility room.
+door_opened            The door opened in the garage.
 service_degraded       Payments-api is struggling — cpu 96%.
 disk_full              /dev/sda is high — usage 99%.
 server_offline         Web-2 went dark — region eu-west.
@@ -32,8 +32,8 @@ backup_uploaded        The backup uploaded — size 512MB.
 player_died            Ari has fallen to the Bone Dragon.
 
 ## executive_briefing (professional)
-washing_machine_done   The washing machine is done — cycle cottons and in the utility room.
-door_opened            The door is open — in the garage.
+washing_machine_done   The washing machine is done in the utility room — cycle cottons.
+door_opened            The door is open in the garage.
 service_degraded       Payments-api is struggling — cpu 96% and latency 950ms.
 disk_full              /dev/sda is spiking — usage 99%.
 server_offline         Web-2 went dark — region eu-west.
@@ -43,8 +43,8 @@ backup_uploaded        The backup uploaded — file db.sql and size 512MB.
 player_died            Ari has fallen to the Bone Dragon.
 
 ## sports_commentator (excited)
-washing_machine_done   The washing machine is finally done — in the utility room!
-door_opened            The door stands open — in the garage!
+washing_machine_done   The washing machine is finally done in the utility room!
+door_opened            The door stands open in the garage!
 service_degraded       Payments-api is in trouble — cpu 96%!
 disk_full              /dev/sda is off the charts — usage 99%!
 server_offline         Web-2 is silenced — region eu-west!
@@ -54,8 +54,8 @@ backup_uploaded        The backup uploaded — size 512MB!
 player_died            Ari has fallen to the Bone Dragon!
 
 ## sci_fi_computer (calm)
-washing_machine_done   The washing machine is done — in the utility room.
-door_opened            The door is open — in the garage.
+washing_machine_done   The washing machine is done in the utility room.
+door_opened            The door is open in the garage.
 service_degraded       Payments-api is struggling — cpu 96%.
 disk_full              /dev/sda is spiking — usage 99%.
 server_offline         Web-2 went dark — region eu-west.

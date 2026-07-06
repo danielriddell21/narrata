@@ -272,7 +272,13 @@ func (c *Client) narrate(t Task, style Style, cons Constraints) string {
 	} else {
 		clause = capitalise(clauseFor(sh, action, subject, toneBucket(style.Tone), r))
 	}
-	if p := fitPhrases(clause, realizeAll(rest), cons); len(p) > 0 {
+	// Place/time adjuncts read as part of the action, so attach them to the verb
+	// clause ("done in the utility room"); the rest form an em-dash detail list.
+	adjuncts, details := partitionAdjuncts(rest)
+	if adj := fitPhrases(clause, realizeAll(adjuncts), cons); len(adj) > 0 {
+		clause += " " + strings.Join(adj, " ")
+	}
+	if p := fitPhrases(clause, realizeAll(details), cons); len(p) > 0 {
 		clause += " — " + joinList(p)
 	}
 	return terminate(applyBudget(clause+".", cons), style)

@@ -148,6 +148,25 @@ func fieldScore(f Field) int {
 	return s
 }
 
+// partitionAdjuncts splits fields into place/time adjuncts, which attach to a
+// verb clause ("... in the utility room"), and coordinate details, which read
+// as a list ("cpu 96% and latency 950ms"). Place adjuncts are ordered before
+// time so the clause reads naturally ("done in the lab at noon").
+func partitionAdjuncts(fields []Field) (adjuncts, details []Field) {
+	var places, times []Field
+	for _, f := range fields {
+		switch f.Kind {
+		case KindPlace:
+			places = append(places, f)
+		case KindTime:
+			times = append(times, f)
+		default:
+			details = append(details, f)
+		}
+	}
+	return append(places, times...), details
+}
+
 // salient returns up to max fields, highest score first, stable within a score.
 func salient(fields []Field, max int) []Field {
 	if max <= 0 || len(fields) <= max {
