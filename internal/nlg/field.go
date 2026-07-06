@@ -89,9 +89,18 @@ func withKinds(fields []Field) []Field {
 }
 
 func inferKind(key string, v any) Kind {
-	switch t := v.(type) {
-	case bool:
+	if _, ok := v.(bool); ok {
 		return KindFlag
+	}
+	lk := strings.ToLower(key)
+	// An integer keyed by an index word (minute, lap, round) is an ordinal
+	// position in time, not a measurement: it realises as "in the 89th minute".
+	if ordinalIndexKeys[lk] {
+		if _, ok := toInt(v); ok {
+			return KindTime
+		}
+	}
+	switch t := v.(type) {
 	case float64, float32, int, int64, int32:
 		return KindQuantity
 	case string:
@@ -99,7 +108,6 @@ func inferKind(key string, v any) Kind {
 			return KindQuantity
 		}
 	}
-	lk := strings.ToLower(key)
 	switch {
 	case containsAny(lk, "room", "place", "location", "zone", "area",
 		"region", "datacenter", "datacentre", "cluster", "site"):
@@ -203,7 +211,7 @@ func realize(f Field) string {
 	case KindPlace:
 		return realizePlace(f)
 	case KindTime:
-		return "at " + valueString(f.Value)
+		return realizeTime(f)
 	case KindFlag:
 		if b, ok := f.Value.(bool); ok && !b {
 			return "no " + humanizeKey(f.Key)
@@ -214,6 +222,40 @@ func realize(f Field) string {
 	default:
 		return humanizeKey(f.Key) + " " + valueString(f.Value)
 	}
+}
+
+// ordinalIndexKeys name an integer's position in time ("minute 89" -> "in the
+// 89th minute") rather than a measured quantity.
+var ordinalIndexKeys = map[string]bool{
+	"minute": true, "lap": true, "round": true, "wave": true,
+}
+
+// realizeTime renders a time field: an ordinal index ("in the 89th minute") for
+// an index key, else a timestamp ("at 14:30").
+func realizeTime(f Field) string {
+	lk := strings.ToLower(f.Key)
+	if ordinalIndexKeys[lk] {
+		if n, ok := toInt(f.Value); ok {
+			return "in the " + ordinal(n) + " " + lk
+		}
+	}
+	return "at " + valueString(f.Value)
+}
+
+// ordinal renders an integer as an English ordinal ("1st", "2nd", "89th").
+func ordinal(n int) string {
+	suffix := "th"
+	if n%100 < 11 || n%100 > 13 {
+		switch n % 10 {
+		case 1:
+			suffix = "st"
+		case 2:
+			suffix = "nd"
+		case 3:
+			suffix = "rd"
+		}
+	}
+	return strconv.Itoa(n) + suffix
 }
 
 // realizePlace renders a location. A named location key (region, datacenter,
@@ -307,6 +349,15 @@ func impliedPercent(key string, v any) bool {
 	}
 	f, ok := toFloat(v)
 	return ok && f >= 0 && f <= 100
+}
+
+// toInt reports an integer-valued number, rejecting fractions and non-numbers.
+func toInt(v any) (int, bool) {
+	f, ok := toFloat(v)
+	if !ok || f != float64(int64(f)) {
+		return 0, false
+	}
+	return int(f), true
 }
 
 func toFloat(v any) (float64, bool) {

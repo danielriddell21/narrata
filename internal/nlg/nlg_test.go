@@ -252,6 +252,18 @@ func TestPlaceAdjunctAttachesToClause(t *testing.T) {
 	}
 }
 
+func TestIndexKeyReadsAsOrdinalTime(t *testing.T) {
+	c := mustClient(t)
+	// An index key (minute) reads as an ordinal position in time attached to the
+	// clause ("in the 89th minute"), not a measurement ("minute 89").
+	res, _ := c.Generate(context.Background(), Task{
+		Event: "goal_scored", Data: map[string]any{"team": "Rovers", "minute": 89}, Seed: 1,
+	})
+	if !strings.Contains(res.Text, "in the 89th minute") {
+		t.Fatalf("index key not read as ordinal time: %q", res.Text)
+	}
+}
+
 func TestRedundantDimensionKeyDropped(t *testing.T) {
 	c := mustClient(t)
 	// A "size" key with a unit needs no prefix: "512MB", not "size 512MB".
