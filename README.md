@@ -1,27 +1,23 @@
 # narrata
 
-*n.* the telling of what happened.
+> *n.* the telling of what happened.
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/danielriddell21/narrata.svg)](https://pkg.go.dev/github.com/danielriddell21/narrata)
 [![CI](https://github.com/danielriddell21/narrata/actions/workflows/ci.yaml/badge.svg)](https://github.com/danielriddell21/narrata/actions/workflows/ci.yaml)
+[![codecov](https://codecov.io/gh/danielriddell21/narrata/graph/badge.svg)](https://codecov.io/gh/danielriddell21/narrata)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=danielriddell21_narrata&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=danielriddell21_narrata)
+[![Go Reference](https://pkg.go.dev/badge/github.com/danielriddell21/narrata.svg)](https://pkg.go.dev/github.com/danielriddell21/narrata)
 [![Go 1.26](https://img.shields.io/badge/go-1.26-blue)](https://go.dev)
 [![MIT License](https://img.shields.io/badge/licence-MIT-green)](LICENSE)
 
-An embedded narration runtime for Go. Narrata turns structured data and events
-into short human-readable text (and optional speech), shaped by configurable
-personas.
+An embedded narration runtime for Go. Narrata turns structured data and events into short human-readable text (and optional speech), shaped by configurable personas.
 
 ```text
 input data -> persona -> generate narration -> text/audio result
 ```
 
-Everything happens at runtime in pure Go. There are no models, no cgo and no
-external files, and the only dependency is the standard library. Narration
-comes from a small procedural engine conditioned on the persona, so the
-resulting binary is self-contained and starts immediately.
+Everything happens at runtime in pure Go. There are no models, no cgo and no external files, and the only dependency is the standard library. Narration comes from a small procedural engine conditioned on the persona, so the resulting binary is self-contained and starts immediately.
 
-It is a library you embed, **not** an assistant, agent, chatbot, memory system,
-or tool-calling framework. See [what Narrata is not](#what-narrata-is-not).
+It is a library you embed, **not** an assistant, agent, chatbot, memory system, or tool-calling framework. See [what Narrata is not](#what-narrata-is-not).
 
 ## Install
 
@@ -65,59 +61,21 @@ func main() {
 }
 ```
 
-The default `native` backend builds sentences from the event shape and the
-persona's tone. See [docs/backends.md](docs/backends.md).
-
-Runnable programs live in [`examples/`](examples): `monitoring`, `game`, and
-`home_automation`. There is also a development CLI (`go run ./cmd/narrata`)
-that validates personas, scaffolds new ones, and renders events from the
-terminal. See [docs/cli.md](docs/cli.md).
-
-## Architecture
-
-The host owns execution, data, and timing, and calls Narrata when it wants
-narration. Narrata only transforms host-provided data.
-
-```mermaid
-flowchart LR
-    H[Host application] -->|Request| E
-    subgraph E["Engine"]
-        direction TB
-        PR[Persona registry] --> GE[Narration engine]
-        GE --> OP[Output policy]
-        OP --> TT[Optional TTS]
-    end
-    E -->|"Result: text + audio"| H
-```
-
-Details in [docs/architecture.md](docs/architecture.md).
+Runnable programs live in [`examples/`](examples): `monitoring`, `game`, and `home_automation`. There is also a development CLI (`go run ./cmd/narrata`) that validates personas, scaffolds new ones, and renders events from the terminal.
 
 ## Default personas
 
-`narrator`, `home_announcer`, `funny_narrator`, `dungeon_master`,
-`executive_briefing`, `newsreader`, `sports_commentator`, `sci_fi_computer`,
-`robot_butler`. Customise or add your own via `personas.json`, described in
-[docs/personas.md](docs/personas.md).
+`narrator`, `home_announcer`, `funny_narrator`, `dungeon_master`, `executive_briefing`, `newsreader`, `sports_commentator`, `sci_fi_computer`, `robot_butler`. Customise or add your own via `personas.json`.
 
 ## What Narrata is NOT
 
-Narrata deliberately excludes assistant frameworks, chat sessions, memory,
-tool calling, planners, RAG, and autonomous agents. If your app needs those,
-build them outside Narrata and call `Generate()` only for final narration. The
-public API exposes none of those concepts, and a test enforces it.
+Narrata deliberately excludes assistant frameworks, chat sessions, memory, tool calling, planners, RAG, and autonomous agents. If your app needs those, build them outside Narrata and call `Generate()` only for final narration. The public API exposes none of those concepts, and a test enforces it.
 
 ## Documentation
 
-Full docs are in [`docs/`](docs/README.md):
+Full documentation lives in the [narrata wiki](https://github.com/danielriddell21/narrata/wiki) — the Go SDK reference, persona schema and authoring, the pure-Go backends, the CLI, and the architecture.
 
-- [spec.md](docs/spec.md): mission, goals, non-goals, use cases
-- [architecture.md](docs/architecture.md): boundaries, flow, components
-- [sdk.md](docs/sdk.md): Go API reference and error handling
-- [personas.md](docs/personas.md): persona schema and defaults
-- [persona-authoring.md](docs/persona-authoring.md): writing and scaffolding personas
-- [backends.md](docs/backends.md): the pure-Go backends
-- [cli.md](docs/cli.md): the `narrata` development CLI
-- [roadmap.md](docs/roadmap.md): phased delivery plan
+Design documents (mission and non-goals, the delivery roadmap, and the research behind the pure-Go approach) stay in [`docs/`](docs/README.md).
 
 ## License
 
