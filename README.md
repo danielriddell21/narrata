@@ -1,6 +1,6 @@
 # narrata
 
-> *n.* the telling of what happened.
+> *narrata* — the telling of what happened.
 
 [![CI](https://github.com/danielriddell21/narrata/actions/workflows/ci.yaml/badge.svg)](https://github.com/danielriddell21/narrata/actions/workflows/ci.yaml)
 [![codecov](https://codecov.io/gh/danielriddell21/narrata/graph/badge.svg)](https://codecov.io/gh/danielriddell21/narrata)
