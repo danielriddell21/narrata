@@ -73,9 +73,7 @@ Narrata deliberately excludes assistant frameworks, chat sessions, memory, tool 
 
 ## Documentation
 
-Full documentation lives in the [narrata wiki](https://github.com/danielriddell21/narrata/wiki) — the Go SDK reference, persona schema and authoring, the pure-Go backends, the CLI, and the architecture.
-
-Design documents (mission and non-goals, the delivery roadmap, and the research behind the pure-Go approach) stay in [`docs/`](docs/README.md).
+Full documentation lives in the [narrata wiki](https://github.com/danielriddell21/narrata/wiki) — the Go SDK reference, persona schema and authoring, the pure-Go backends, the CLI and the architecture, plus the design documents behind them.
 
 ## License
 

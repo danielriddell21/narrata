@@ -38,8 +38,9 @@ backend/           pluggable text and TTS backends
 cmd/narrata/       developer CLI (validate, gen, generate, personas)
 internal/          implementation packages (not part of the public API)
 examples/          runnable usage examples
-docs/              documentation
 ```
+
+Documentation lives in the [wiki](https://github.com/danielriddell21/narrata/wiki).
 
 ## Commit style
 
