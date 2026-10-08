@@ -12,7 +12,3 @@ build (
 )
 
 brew danielriddell21/tap
-
-// Releases were marked as pre-releases by the shared workflow after the fact;
-// letsgo does it as part of publishing, so promotion is still a manual step.
-release prerelease=true
